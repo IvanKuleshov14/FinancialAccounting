@@ -1,1 +1,5 @@
-<Solution />
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/FinancialAccounting.Entities/FinancialAccounting.Entities.csproj" />
+  </Folder>
+</Solution>
