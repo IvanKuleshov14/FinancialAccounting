@@ -4,7 +4,7 @@ using System.Text;
 
 namespace FinancialAccounting.Entities.TargetTransactions
 {
-    internal enum TargetTransactionTypes
+    public enum TargetTransactionTypes
     {
         Expense,
         Income

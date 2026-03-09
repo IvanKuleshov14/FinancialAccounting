@@ -5,13 +5,13 @@ using System.Text;
 
 namespace FinancialAccounting.Entities.TargetTransactions
 {
-    internal class TargetTransaction
+    public class TargetTransaction
     {
         public Guid Id { get; set; }
 
         public required Guid TargetId { get; set; }
 
-        public required TargetTransactionTypes OperationType { get; set; }
+        public required TargetTransactionTypes Type { get; set; }
 
         public required decimal Value { get; set; }
 

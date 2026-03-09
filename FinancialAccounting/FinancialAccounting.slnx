@@ -1,6 +1,8 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/FinancialAccounting.Entities/FinancialAccounting.Entities.csproj" />
+    <Project Path="src/FinancialAccounting.Presenters/FinancialAccounting.Presenters.csproj" Id="20318533-b6d7-449e-be7e-833cab20b03f" />
     <Project Path="src/FinancialAccounting.Web/FinancialAccounting.Web.csproj" Id="96e4963a-0d6e-4c05-b244-886bbbc8001a" />
+    <Project Path="src/FinancialAccouting.Contracts/FinancialAccouting.Contracts.csproj" Id="15d7b17e-9bfc-4e16-8be3-a69b9c136ef4" />
   </Folder>
 </Solution>
