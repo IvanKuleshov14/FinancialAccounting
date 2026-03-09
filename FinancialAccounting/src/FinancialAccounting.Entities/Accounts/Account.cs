@@ -4,7 +4,7 @@ using System.Text;
 
 namespace FinancialAccounting.Entities.Account;
 
-internal class Account
+public class Account
 {
     public Guid Id { get; set; }
 

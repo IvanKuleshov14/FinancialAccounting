@@ -4,13 +4,13 @@ using System.Text;
 
 namespace FinancialAccounting.Entities.Incomes;
 
-internal class Transaction
+public class Transaction
 {
     public Guid Id { get; set; }
 
     public required Guid AccountId { get; set; }
 
-    public required TransactionTypes OperationType { get; set; }
+    public required TransactionTypes Type { get; set; }
 
     public Guid CategoryId { get; set; }
 

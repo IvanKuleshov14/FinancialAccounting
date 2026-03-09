@@ -4,7 +4,7 @@ using System.Text;
 
 namespace FinancialAccounting.Entities.Targets
 {
-    internal class Target
+    public class Target
     {
         public Guid Id { get; set; }
         public required string Name { get; set; }
