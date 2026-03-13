@@ -6,9 +6,18 @@ namespace FinancialAccounting.Entities.Account;
 
 public class Account
 {
-    public Guid Id { get; set; }
+    public Account(Guid id, string name, Guid userId, decimal total)
+    {
+        Id = id;
+        Name = name;
+        UserId = userId;
+        Total = total;
+    }
 
-    public required string Name { get; set; }
+
+    public Guid Id { get; set; }
+    public Guid UserId { get; set; }
+    public string Name { get; set; }
 
     public decimal Total { get; set; } = 0;
 
