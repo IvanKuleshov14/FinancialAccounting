@@ -1,4 +1,5 @@
-﻿using FinancialAccouting.Contracts;
+﻿using FinancialAccounting.Application;
+using FinancialAccouting.Contracts;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FinancialAccounting.Presenters
@@ -7,11 +8,20 @@ namespace FinancialAccounting.Presenters
     [Route("[controller]")]
     public class AccountsController : ControllerBase
     {
+        private readonly IAccountsService _accountService;
+        public AccountsController(IAccountsService accountService)
+        {
+            _accountService = accountService;
+        }
+
+
         [HttpPost]
         public async Task<IActionResult> Create(
             [FromBody] CreateAccountDto request,
             CancellationToken cancellationToken)
         {
+            await _accountService.Create(request, cancellationToken);
+
             return Ok("Account created");
         }
 
