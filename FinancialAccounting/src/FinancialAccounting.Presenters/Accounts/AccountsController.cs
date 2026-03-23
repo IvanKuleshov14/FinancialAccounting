@@ -40,6 +40,7 @@ namespace FinancialAccounting.Presenters
             [FromRoute] Guid accountId,
             CancellationToken cancellationToken)
         {
+            await _accountService.Delete(accountId, cancellationToken);
             return Ok("Account deleted");
         }
 

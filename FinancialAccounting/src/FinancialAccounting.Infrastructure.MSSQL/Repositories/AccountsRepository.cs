@@ -20,11 +20,6 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Repositories
             await _dbContext.SaveChangesAsync();
         }
 
-        public Task DeleteAsync(Guid accountId, CancellationToken cancellationToken)
-        {
-            throw new NotImplementedException();
-        }
-
         public async Task UpdateAsync(Guid accountId, string accountName, CancellationToken cancellationToken)
         {
             var account = await _dbContext.Accounts.FindAsync(accountId);
@@ -32,6 +27,17 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Repositories
             if(account != null)
             {
                 account.Name = accountName;
+                await _dbContext.SaveChangesAsync();
+            }
+        }
+
+        public async Task DeleteAsync(Guid accountId, CancellationToken cancellationToken)
+        {
+            var account = await _dbContext.Accounts.FindAsync(accountId);
+
+            if (account != null)
+            {
+                _dbContext.Accounts.Remove(account);
                 await _dbContext.SaveChangesAsync();
             }
         }

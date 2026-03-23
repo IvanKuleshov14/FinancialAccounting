@@ -58,9 +58,9 @@ namespace FinancialAccounting.Application
             await _accountsRepository.UpdateAsync(accountId, newAccountName, cancellationToken);
         }
 
-        public Task Delete(Guid accountId, CancellationToken cancellationToken)
+        public async Task Delete(Guid accountId, CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            await _accountsRepository.DeleteAsync(accountId, cancellationToken);
         }
     }
 }
