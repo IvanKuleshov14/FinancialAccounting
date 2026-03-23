@@ -9,23 +9,24 @@ namespace FinancialAccounting.Application
     public class AccountsService : IAccountsService
     {
         private readonly IAccountsRepository _accountsRepository;
-        private readonly IValidator<CreateAccountDto> _validator;
-        private readonly ILogger<AccountsService> _logger;
+        private readonly IValidator<CreateAccountDto> _createValidator;
+        private readonly IValidator<UpdateAccountDto> _updateValidator;
 
-        public AccountsService(IAccountsRepository accountsRepository, IValidator<CreateAccountDto> validator, ILogger<AccountsService> logger)
+        public AccountsService(
+            IAccountsRepository accountsRepository,
+            IValidator<CreateAccountDto> createValidator,
+            IValidator<UpdateAccountDto> updateValidator)
         {
             _accountsRepository = accountsRepository;
-            _validator = validator;
-            _logger = logger;
+            _createValidator = createValidator;
+            _updateValidator = updateValidator;
         }
 
 
-        public async Task Create(
-            CreateAccountDto accountDto,
-            CancellationToken cancellationToken)
+        public async Task Create(CreateAccountDto accountDto, CancellationToken cancellationToken)
         {
             // Валидация
-            var validatorResult = await _validator.ValidateAsync(accountDto, cancellationToken);
+            var validatorResult = await _createValidator.ValidateAsync(accountDto, cancellationToken);
             if (!validatorResult.IsValid)
             {
                 throw new ValidationException(validatorResult.Errors);
@@ -33,7 +34,6 @@ namespace FinancialAccounting.Application
 
             // Создание счета
             var accountId = Guid.NewGuid();
-
             var account = new Account(
                 accountId,
                 accountDto.Name,
@@ -43,10 +43,24 @@ namespace FinancialAccounting.Application
 
             // Запись в базу даных
             await _accountsRepository.AddAsync(account, cancellationToken);
+        }
 
-            // Логирование об успешном или неуспешном сохранении
+        public async Task Update(Guid accountId, UpdateAccountDto accountDto, CancellationToken cancellationToken)
+        {
+            var validatorResult = await _updateValidator.ValidateAsync(accountDto, cancellationToken);
+            if (!validatorResult.IsValid)
+            {
+                throw new ValidationException(validatorResult.Errors);
+            }
 
-            _logger.LogInformation("Account Created with id {accountId}", accountId);
+            var newAccountName = accountDto.Name;
+
+            await _accountsRepository.UpdateAsync(accountId, newAccountName, cancellationToken);
+        }
+
+        public Task Delete(Guid accountId, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
         }
     }
 }

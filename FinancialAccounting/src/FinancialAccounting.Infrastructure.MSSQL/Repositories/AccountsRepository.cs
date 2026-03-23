@@ -14,21 +14,26 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Repositories
         {
             _dbContext = accountDbContext;
         }
-        public async Task<Guid> AddAsync(Account account, CancellationToken cancellationToken)
+        public async Task AddAsync(Account account, CancellationToken cancellationToken)
         {
             await _dbContext.AddAsync(account);
             await _dbContext.SaveChangesAsync();
-            return account.Id;
         }
 
-        public Task<Guid> DeleteAsync(Guid accountId, CancellationToken cancellationToken)
+        public Task DeleteAsync(Guid accountId, CancellationToken cancellationToken)
         {
             throw new NotImplementedException();
         }
 
-        public Task<Guid> SaveAsync(Account account, CancellationToken cancellationToken)
+        public async Task UpdateAsync(Guid accountId, string accountName, CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            var account = await _dbContext.Accounts.FindAsync(accountId);
+
+            if(account != null)
+            {
+                account.Name = accountName;
+                await _dbContext.SaveChangesAsync();
+            }
         }
     }
 }
