@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace FinancialAccounting.Entities.Targets
+﻿namespace FinancialAccounting.Entities.Targets
 {
     public class Target
     {

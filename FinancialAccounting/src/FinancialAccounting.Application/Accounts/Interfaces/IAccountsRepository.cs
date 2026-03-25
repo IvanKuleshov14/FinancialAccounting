@@ -1,7 +1,4 @@
-﻿using FinancialAccounting.Entities.Account;
-using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using FinancialAccounting.Entities.Accounts;
 
 namespace FinancialAccounting.Application.Accounts
 {

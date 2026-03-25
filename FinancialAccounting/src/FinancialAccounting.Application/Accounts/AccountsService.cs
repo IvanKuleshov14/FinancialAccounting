@@ -1,8 +1,7 @@
 ﻿using FinancialAccounting.Application.Accounts;
-using FinancialAccounting.Entities.Account;
+using FinancialAccounting.Entities.Accounts;
 using FinancialAccouting.Contracts;
 using FluentValidation;
-using Microsoft.Extensions.Logging;
 
 namespace FinancialAccounting.Application
 {

@@ -1,4 +1,4 @@
-﻿namespace FinancialAccounting.Entities.Incomes;
+﻿namespace FinancialAccounting.Entities.Transactions;
 
 public enum TransactionTypes
 {

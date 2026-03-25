@@ -1,4 +1,4 @@
-﻿using FinancialAccounting.Entities.Account;
+﻿using FinancialAccounting.Entities.Accounts;
 using FinancialAccounting.Entities.Users;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -14,12 +14,12 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Configurations
         {
             builder.HasKey(a => a.Id);
 
-            builder.
-                HasOne<User>().
-                WithMany().
-                HasForeignKey(a => a.UserId).
-                IsRequired().
-                OnDelete(DeleteBehavior.Cascade);
+            //builder.
+            //    HasOne<User>().
+            //    WithMany().
+            //    HasForeignKey(a => a.UserId).
+            //    IsRequired().
+            //    OnDelete(DeleteBehavior.Cascade);
 
             builder.
                 HasIndex(a => a.UserId);

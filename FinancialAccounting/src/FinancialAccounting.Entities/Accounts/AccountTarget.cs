@@ -1,4 +1,4 @@
-﻿namespace FinancialAccounting.Entities.Account;
+﻿namespace FinancialAccounting.Entities.Accounts;
 
 public class AccountTarget
 {

@@ -1,9 +1,4 @@
-﻿using FinancialAccounting.Entities.Incomes;
-using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace FinancialAccounting.Entities.TargetTransactions
+﻿namespace FinancialAccounting.Entities.TargetTransactions
 {
     public class TargetTransaction
     {
