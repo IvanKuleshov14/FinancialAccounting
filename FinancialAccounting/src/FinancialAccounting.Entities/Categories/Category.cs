@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace FinancialAccounting.Entities.Categories
+﻿namespace FinancialAccounting.Entities.Categories
 {
     public class Category
     {

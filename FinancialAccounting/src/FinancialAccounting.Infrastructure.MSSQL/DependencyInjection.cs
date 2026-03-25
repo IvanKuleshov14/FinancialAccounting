@@ -13,7 +13,7 @@ namespace FinancialAccounting.Infrastructure.MSSQL
     {
         public static IServiceCollection AddInsfrasturcture(this IServiceCollection services)
         {
-            services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly);
+            //services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly);
 
             services.AddScoped<IAccountsRepository, AccountsRepository>();
 

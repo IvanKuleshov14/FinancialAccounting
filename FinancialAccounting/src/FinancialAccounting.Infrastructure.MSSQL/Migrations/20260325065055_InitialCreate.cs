@@ -26,14 +26,17 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "User",
+                name: "Targets",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: false),
+                    Total = table.Column<decimal>(type: "decimal(18,2)", nullable: false, defaultValue: 0m),
+                    Goal = table.Column<decimal>(type: "decimal(18,2)", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_User", x => x.Id);
+                    table.PrimaryKey("PK_Targets", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -42,7 +45,7 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Migrations
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: false),
                     Total = table.Column<decimal>(type: "decimal(18,2)", nullable: false, defaultValue: 0m),
                     TargetId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
                 },
@@ -54,12 +57,6 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Migrations
                         column: x => x.TargetId,
                         principalTable: "AccountTarget",
                         principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_Accounts_User_UserId",
-                        column: x => x.UserId,
-                        principalTable: "User",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateIndex(
@@ -82,10 +79,10 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Migrations
                 name: "Accounts");
 
             migrationBuilder.DropTable(
-                name: "AccountTarget");
+                name: "Targets");
 
             migrationBuilder.DropTable(
-                name: "User");
+                name: "AccountTarget");
         }
     }
 }

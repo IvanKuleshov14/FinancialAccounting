@@ -1,9 +1,6 @@
 ﻿using FinancialAccounting.Application.Accounts;
-using FinancialAccounting.Entities.Account;
+using FinancialAccounting.Entities.Accounts;
 using FinancialAccounting.Infrastructure.MSSQL.Data;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace FinancialAccounting.Infrastructure.MSSQL.Repositories
 {
@@ -14,21 +11,32 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Repositories
         {
             _dbContext = accountDbContext;
         }
-        public async Task<Guid> AddAsync(Account account, CancellationToken cancellationToken)
+        public async Task AddAsync(Account account, CancellationToken cancellationToken)
         {
             await _dbContext.AddAsync(account);
             await _dbContext.SaveChangesAsync();
-            return account.Id;
         }
 
-        public Task<Guid> DeleteAsync(Guid accountId, CancellationToken cancellationToken)
+        public async Task UpdateAsync(Guid accountId, string accountName, CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            var account = await _dbContext.Accounts.FindAsync(accountId);
+
+            if(account != null)
+            {
+                account.Name = accountName;
+                await _dbContext.SaveChangesAsync();
+            }
         }
 
-        public Task<Guid> SaveAsync(Account account, CancellationToken cancellationToken)
+        public async Task DeleteAsync(Guid accountId, CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            var account = await _dbContext.Accounts.FindAsync(accountId);
+
+            if (account != null)
+            {
+                _dbContext.Accounts.Remove(account);
+                await _dbContext.SaveChangesAsync();
+            }
         }
     }
 }

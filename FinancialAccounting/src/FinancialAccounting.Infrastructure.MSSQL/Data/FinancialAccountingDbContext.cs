@@ -1,10 +1,7 @@
-﻿using FinancialAccounting.Entities.Account;
+﻿using FinancialAccounting.Entities.Accounts;
 using FinancialAccounting.Entities.Targets;
 using FinancialAccounting.Infrastructure.MSSQL.Configurations;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace FinancialAccounting.Infrastructure.MSSQL.Data
 {

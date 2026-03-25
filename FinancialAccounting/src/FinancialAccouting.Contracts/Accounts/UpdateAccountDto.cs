@@ -4,5 +4,5 @@ using System.Text;
 
 namespace FinancialAccouting.Contracts
 {
-    public record UpdateAccountDto(string Name, decimal Total);
+    public record UpdateAccountDto(string Name);
 }

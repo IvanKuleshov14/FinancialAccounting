@@ -25,12 +25,14 @@ namespace FinancialAccounting.Presenters
             return Ok("Account created");
         }
 
-        [HttpGet("{accountId:guid}")]
-        public async Task<IActionResult> Get(
+        [HttpPut("{accountId:guid}")]
+        public async Task<IActionResult> Update(
             [FromRoute] Guid accountId,
+            [FromBody] UpdateAccountDto request,
             CancellationToken cancellationToken)
         {
-            return Ok("Account geted");
+            await _accountService.Update(accountId, request, cancellationToken);
+            return Ok("Account updated");
         }
 
         [HttpDelete("{accountId:guid}")]
@@ -38,16 +40,16 @@ namespace FinancialAccounting.Presenters
             [FromRoute] Guid accountId,
             CancellationToken cancellationToken)
         {
+            await _accountService.Delete(accountId, cancellationToken);
             return Ok("Account deleted");
         }
 
-        [HttpPut("{accountId:guid}")]
-        public async Task<IActionResult> Update(
+        [HttpGet("{accountId:guid}")]
+        public async Task<IActionResult> Get(
             [FromRoute] Guid accountId,
-            [FromBody] UpdateAccountDto request,
             CancellationToken cancellationToken)
         {
-            return Ok("Account updated");
+            return Ok("Account geted");
         }
 
         [HttpPost("{accountId:guid}/account_targets")]

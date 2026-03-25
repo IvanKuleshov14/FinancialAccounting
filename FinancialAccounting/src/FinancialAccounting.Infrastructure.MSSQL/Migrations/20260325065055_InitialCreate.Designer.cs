@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FinancialAccounting.Infrastructure.MSSQL.Migrations
 {
     [DbContext(typeof(FinancialAccountingDbContext))]
-    [Migration("20260317143122_Targets")]
-    partial class Targets
+    [Migration("20260325065055_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -25,7 +25,7 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("FinancialAccounting.Entities.Account.Account", b =>
+            modelBuilder.Entity("FinancialAccounting.Entities.Accounts.Account", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -58,7 +58,7 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Migrations
                     b.ToTable("Accounts");
                 });
 
-            modelBuilder.Entity("FinancialAccounting.Entities.Account.AccountTarget", b =>
+            modelBuilder.Entity("FinancialAccounting.Entities.Accounts.AccountTarget", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -103,28 +103,11 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Migrations
                     b.ToTable("Targets");
                 });
 
-            modelBuilder.Entity("FinancialAccounting.Entities.Users.User", b =>
+            modelBuilder.Entity("FinancialAccounting.Entities.Accounts.Account", b =>
                 {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("User");
-                });
-
-            modelBuilder.Entity("FinancialAccounting.Entities.Account.Account", b =>
-                {
-                    b.HasOne("FinancialAccounting.Entities.Account.AccountTarget", "Target")
+                    b.HasOne("FinancialAccounting.Entities.Accounts.AccountTarget", "Target")
                         .WithOne()
-                        .HasForeignKey("FinancialAccounting.Entities.Account.Account", "TargetId");
-
-                    b.HasOne("FinancialAccounting.Entities.Users.User", null)
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("FinancialAccounting.Entities.Accounts.Account", "TargetId");
 
                     b.Navigation("Target");
                 });
