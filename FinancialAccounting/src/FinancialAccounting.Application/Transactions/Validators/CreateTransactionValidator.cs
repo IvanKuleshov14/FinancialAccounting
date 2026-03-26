@@ -17,8 +17,8 @@ namespace FinancialAccounting.Application.Transactions.Validators
                 NotEmpty().WithMessage("Не указана сумма транзакции").
                 GreaterThanOrEqualTo(0).WithMessage("Сумма транзакции должна быть >= 0");
 
-            RuleFor(x => x.CreatedDay).
-                NotEmpty().WithMessage("Не указана дата транзацкии");
+            //RuleFor(x => x.CreatedDay).
+            //    NotEmpty().WithMessage("Не указана дата транзацкии");
         }
     }
 }
