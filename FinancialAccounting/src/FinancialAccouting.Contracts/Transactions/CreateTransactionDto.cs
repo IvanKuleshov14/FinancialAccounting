@@ -2,5 +2,11 @@
 
 namespace FinancialAccouting.Contracts.Transactions
 {
-    public record CreateTransactionDto(Guid AccountId, TransactionTypes TransactionType, decimal Value, DateOnly CreatedDay) { };
+    public record CreateTransactionDto(
+        Guid AccountId,
+        TransactionTypes TransactionType,
+        decimal Value,
+        DateOnly CreatedDay,
+        string? Description)
+    { }
 }

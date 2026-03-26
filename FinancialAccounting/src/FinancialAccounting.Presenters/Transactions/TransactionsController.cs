@@ -1,4 +1,5 @@
-﻿using FinancialAccouting.Contracts.Transactions;
+﻿using FinancialAccounting.Application.Transactions;
+using FinancialAccouting.Contracts.Transactions;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
@@ -10,10 +11,19 @@ namespace FinancialAccounting.Presenters.Transactions
     [Route("[controller]")]
     public class TransactionsController : ControllerBase
     {
-        [HttpPost]
-        public async Task<IActionResult> Create([FromBody]CreateTransactionDto request, CancellationToken cancellationToken)
+        private readonly ITransactionsService _transactionService;
+
+        public TransactionsController(ITransactionsService transactionsService)
         {
-            throw new NotImplementedException();
+            _transactionService = transactionsService;
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Create([FromBody] CreateTransactionDto request, CancellationToken cancellationToken)
+        {
+            await _transactionService.Create(request, cancellationToken);
+
+            return Ok("Transaction created");
         }
 
     }

@@ -2,13 +2,14 @@
 
 public class Transaction
 {
-    public Transaction(Guid id, Guid accountId, TransactionTypes type, decimal value, DateOnly createdDay)
+    public Transaction(Guid id, Guid accountId, TransactionTypes type, decimal value, DateOnly createdDay, string? description)
     {
         Id = id;
         AccountId = accountId;
         Type = type;
         Value = value;
         CreatedDay = createdDay;
+        Description = description;
     }
 
     public Guid Id { get; set; }

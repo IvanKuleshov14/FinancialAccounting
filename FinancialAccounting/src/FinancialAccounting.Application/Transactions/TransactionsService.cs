@@ -32,7 +32,8 @@ namespace FinancialAccounting.Application.Transactions
                 transactionDto.AccountId,
                 transactionDto.TransactionType,
                 transactionDto.Value,
-                transactionDto.CreatedDay
+                transactionDto.CreatedDay,
+                transactionDto.Description
                 );
 
             await _transactionsRepository.AddAsync(transaction, cancellationToken);
