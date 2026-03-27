@@ -5,5 +5,6 @@ namespace FinancialAccounting.Application.Transactions
     public interface ITransactionsRepository
     {
         Task AddAsync(Transaction transaction, CancellationToken cancellationToken);
+        Task DeleteAsync(Guid transactionId, CancellationToken cancellationToken);
     }
 }

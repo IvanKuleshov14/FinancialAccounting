@@ -38,5 +38,10 @@ namespace FinancialAccounting.Application.Transactions
 
             await _transactionsRepository.AddAsync(transaction, cancellationToken);
         }
+
+        public async Task Delete(Guid transactionId, CancellationToken cancellationToken)
+        {
+            await _transactionsRepository.DeleteAsync(transactionId, cancellationToken);
+        }
     }
 }
