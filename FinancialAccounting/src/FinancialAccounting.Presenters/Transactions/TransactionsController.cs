@@ -27,6 +27,15 @@ namespace FinancialAccounting.Presenters.Transactions
             return Ok("Transaction created");
         }
 
+        [HttpPost("transfers")]
+        public async Task<IActionResult> CreateTransfer(
+            [FromBody] CreateTransferDto request,
+            CancellationToken cancellationToken)
+        {
+            await _transactionService.CreateTransfer(request, cancellationToken);
+            return Ok("Transfer created");
+        }
+
         [HttpDelete("{transactionId:guid}")]
         public async Task<IActionResult> Delete(
             [FromRoute] Guid transactionId,

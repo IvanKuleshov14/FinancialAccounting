@@ -3,15 +3,15 @@ using FluentValidation;
 
 namespace FinancialAccounting.Application.Transactions.Validators
 {
-    public class CreateTransactionValidator : AbstractValidator<CreateTransactionDto>
+    public class CreateTransferValidator : AbstractValidator<CreateTransferDto>
     {
-        public CreateTransactionValidator()
+        public CreateTransferValidator()
         {
-            RuleFor(x => x.AccountId).
-                NotEmpty().WithMessage("Не указан id счета");
+            RuleFor(x => x.FromAccountId).
+                NotEmpty().WithMessage("Не указан id счета для списания");
 
-            RuleFor(x => x.TransactionType).
-                NotEmpty().WithMessage("Не указан тип транзации");
+            RuleFor(x => x.ToAccountId).
+                NotEmpty().WithMessage("Не указан id счета для пополнения");
 
             RuleFor(x => x.Value).
                 NotEmpty().WithMessage("Не указана сумма транзакции").

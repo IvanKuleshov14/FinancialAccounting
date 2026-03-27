@@ -33,10 +33,16 @@ namespace FinancialAccounting.Application.Transactions
                 transactionDto.TransactionType,
                 transactionDto.Value,
                 transactionDto.CreatedDay,
-                transactionDto.Description
+                transactionDto.Description,
+                transactionDto.RelatedTransactionId
                 );
 
             await _transactionsRepository.AddAsync(transaction, cancellationToken);
+        }
+
+        public Task CreateTransfer(CreateTransferDto transferDto, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
         }
 
         public async Task Delete(Guid transactionId, CancellationToken cancellationToken)
