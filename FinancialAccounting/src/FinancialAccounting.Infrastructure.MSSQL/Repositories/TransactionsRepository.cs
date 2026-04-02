@@ -39,6 +39,34 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Repositories
             await _dbContext.SaveChangesAsync();
         }
 
+        public async Task AddTransferAsync(Transaction transactionExpense, Transaction transactionIncome, CancellationToken cancellationToken)
+        {
+            var fromAccount = await _dbContext.Accounts.FindAsync(transactionExpense.AccountId);
+            if(fromAccount == null)
+            {
+                throw new Exception("Счет для списания не найден");
+            }
+            var toAccount = await _dbContext.Accounts.FindAsync(transactionIncome.AccountId);
+            if (toAccount == null)
+            {
+                throw new Exception("Счет для пополнения не найден");
+            }
+
+            if(transactionExpense.Value > fromAccount.Total)
+            {
+                throw new Exception("На счете для списания недостаточно средств");
+            }
+            else
+            {
+                fromAccount.Total -= transactionExpense.Value;
+                toAccount.Total += transactionIncome.Value;
+            }
+
+            await _dbContext.AddAsync(transactionExpense, cancellationToken);
+            await _dbContext.AddAsync(transactionIncome, cancellationToken);
+            await _dbContext.SaveChangesAsync();
+        }
+
         public async Task DeleteAsync(Guid transactionId, CancellationToken cancellationToken)
         {
             var transaction = await _dbContext.Transactions.FindAsync(transactionId);

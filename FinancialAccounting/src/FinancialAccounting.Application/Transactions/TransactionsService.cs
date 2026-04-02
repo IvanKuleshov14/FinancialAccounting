@@ -9,12 +9,14 @@ namespace FinancialAccounting.Application.Transactions
     public class TransactionsService : ITransactionsService
     {
         private readonly IValidator<CreateTransactionDto> _createValidator;
+        private readonly IValidator<CreateTransferDto> _createTransferValidator;
         private readonly ITransactionsRepository _transactionsRepository;
 
-        public TransactionsService(ITransactionsRepository transactionsRepository, IValidator<CreateTransactionDto> createValidator)
+        public TransactionsService(ITransactionsRepository transactionsRepository, IValidator<CreateTransactionDto> createValidator, IValidator<CreateTransferDto> createTransferValidator)
         {
             _transactionsRepository = transactionsRepository;
             _createValidator = createValidator;
+            _createTransferValidator = createTransferValidator;
         }
 
 
@@ -40,9 +42,39 @@ namespace FinancialAccounting.Application.Transactions
             await _transactionsRepository.AddAsync(transaction, cancellationToken);
         }
 
-        public Task CreateTransfer(CreateTransferDto transferDto, CancellationToken cancellationToken)
+        public async Task CreateTransfer(CreateTransferDto transferDto, CancellationToken cancellationToken)
         {
-            throw new NotImplementedException();
+            var validatorResult = await _createTransferValidator.ValidateAsync(transferDto, cancellationToken);
+            if (!validatorResult.IsValid)
+            {
+                throw new ValidationException(validatorResult.Errors);
+            }
+
+            var linkId = Guid.NewGuid();
+
+            var transactionExpenseId = Guid.NewGuid();
+            var transactionExpense = new Transaction(
+                transactionExpenseId,
+                transferDto.FromAccountId,
+                TransactionTypes.Expense,
+                transferDto.Value,
+                transferDto.CreatedDay,
+                transferDto.Description,
+                linkId
+                );
+
+            var transactionIncomeId = Guid.NewGuid();
+            var transactionIncome = new Transaction(
+                transactionIncomeId,
+                transferDto.ToAccountId,
+                TransactionTypes.Expense,
+                transferDto.Value,
+                transferDto.CreatedDay,
+                transferDto.Description,
+                linkId
+                );
+
+            await _transactionsRepository.AddTransferAsync(transactionExpense, transactionIncome, cancellationToken);
         }
 
         public async Task Delete(Guid transactionId, CancellationToken cancellationToken)
