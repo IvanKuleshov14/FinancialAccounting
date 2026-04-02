@@ -36,7 +36,7 @@ namespace FinancialAccounting.Application.Transactions
                 transactionDto.Value,
                 transactionDto.CreatedDay,
                 transactionDto.Description,
-                transactionDto.RelatedTransactionId
+                null
                 );
 
             await _transactionsRepository.AddAsync(transaction, cancellationToken);
@@ -67,7 +67,7 @@ namespace FinancialAccounting.Application.Transactions
             var transactionIncome = new Transaction(
                 transactionIncomeId,
                 transferDto.ToAccountId,
-                TransactionTypes.Expense,
+                TransactionTypes.Income,
                 transferDto.Value,
                 transferDto.CreatedDay,
                 transferDto.Description,

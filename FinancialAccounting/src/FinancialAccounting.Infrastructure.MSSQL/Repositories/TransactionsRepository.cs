@@ -70,36 +70,98 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Repositories
         public async Task DeleteAsync(Guid transactionId, CancellationToken cancellationToken)
         {
             var transaction = await _dbContext.Transactions.FindAsync(transactionId);
-            if(transaction == null)
+            if (transaction == null)
             {
                 throw new Exception("Транзакция не найдена");
             }
 
-            var account = await _dbContext.Accounts.FindAsync(transaction.AccountId);
-            if( account == null)
+            if (transaction.RelatedTransactionId == null)
             {
-                throw new Exception("Счет не найден");
+                var hasLaterTransaction = await _dbContext.Transactions.AnyAsync(
+                    t => t.AccountId == transaction.AccountId && t.CreatedTime > transaction.CreatedTime
+                    );
+                if (hasLaterTransaction)
+                {
+                    throw new Exception("Удаление невозможно - транзакция не является последней");
+                }
+
+                var account = await _dbContext.Accounts.FindAsync(transaction.AccountId);
+                if (account == null)
+                {
+                    throw new Exception("Счет не найден");
+                }
+
+                if (transaction.Type == TransactionTypes.Income)
+                {
+                    account.Total -= transaction.Value;
+                }
+                else if (transaction.Type == TransactionTypes.Expense)
+                {
+                    account.Total += transaction.Value;
+                }
+
+                _dbContext.Transactions.Remove(transaction);
+            }
+            else
+            {
+                var currentTransaction = await _dbContext.Transactions.FirstOrDefaultAsync(
+                    t => t.Id == transactionId);
+                if(currentTransaction == null)
+                {
+                    throw new Exception("Текущая транзакция не найдена");
+                }
+                var relatedTransaction = await _dbContext.Transactions.FirstOrDefaultAsync(
+                    t => t.RelatedTransactionId == currentTransaction.RelatedTransactionId &&
+                    t.Id != currentTransaction.Id);
+                if (relatedTransaction == null)
+                {
+                    throw new Exception("Связанная транзакция не найдена");
+                }
+
+                var hasLaterCurrentTransaction = await _dbContext.Transactions.AnyAsync(
+                    t => t.AccountId == currentTransaction.AccountId &&
+                    t.CreatedTime > currentTransaction.CreatedTime
+                    );
+                var hasLaterRelatedTransaction = await _dbContext.Transactions.AnyAsync(
+                    t => t.AccountId == relatedTransaction.AccountId &&
+                    t.CreatedTime > relatedTransaction.CreatedTime
+                    );
+
+                if(hasLaterCurrentTransaction || hasLaterRelatedTransaction)
+                {
+                    throw new Exception("Удаление невозможно - транзакция не является последней");
+                }
+
+                var currentAccount = await _dbContext.Accounts.FirstOrDefaultAsync(
+                    a => a.Id == currentTransaction.AccountId
+                    );
+                if(currentAccount == null)
+                {
+                    throw new Exception("Текущий счет не найден");
+                }
+                var relatedAccount = await _dbContext.Accounts.FirstOrDefaultAsync(
+                    a => a.Id == relatedTransaction.AccountId
+                    );
+                if(relatedAccount == null)
+                {
+                    throw new Exception("Связанный счет не найден");
+                }
+
+                if (currentTransaction.Type == TransactionTypes.Income)
+                {
+                    currentAccount.Total -= currentTransaction.Value;
+                    relatedAccount.Total += relatedTransaction.Value;
+                }
+                else
+                {
+                    currentAccount.Total += currentTransaction.Value;
+                    relatedAccount.Total -= relatedTransaction.Value;
+                }
+
+                _dbContext.Transactions.Remove(currentTransaction);
+                _dbContext.Transactions.Remove(relatedTransaction);
             }
 
-            var hasLaterTransaction = await _dbContext.Transactions.AnyAsync(
-                t => t.AccountId == transaction.AccountId && t.CreatedTime > transaction.CreatedTime
-                );
-            if(hasLaterTransaction)
-            {
-                throw new Exception("Удаление невозможно - транзакция не является последней");
-            }
-            
-
-            if(transaction.Type == TransactionTypes.Income)
-            {
-                account.Total -= transaction.Value;
-            }
-            else if( transaction.Type == TransactionTypes.Expense)
-            {
-                account.Total += transaction.Value;
-            }
-
-            _dbContext.Transactions.Remove(transaction);
             await _dbContext.SaveChangesAsync();
         }
     }
