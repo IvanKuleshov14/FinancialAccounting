@@ -17,7 +17,8 @@ namespace FinancialAccounting.Application.Accounts
             RuleFor(x => x.UserId).
                 NotEmpty().WithMessage("Id пользователя не может быть пустым");
 
-            RuleFor(x => x.Total).GreaterThanOrEqualTo(0).WithMessage("На счете не может быть отрицательного баланса");
+            RuleFor(x => x.Total).
+                GreaterThanOrEqualTo(0).WithMessage("На счете не может быть отрицательного баланса");
         }
     }
 }

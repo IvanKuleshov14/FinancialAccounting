@@ -2,19 +2,32 @@
 
 public class Transaction
 {
+    public Transaction(Guid id, Guid accountId, TransactionTypes type, decimal value, DateOnly createdDay, string? description, Guid? relatedTransactionId)
+    {
+        Id = id;
+        AccountId = accountId;
+        Type = type;
+        Value = value;
+        CreatedDay = createdDay;
+        Description = description;
+        RelatedTransactionId = relatedTransactionId;
+    }
+
     public Guid Id { get; set; }
 
-    public required Guid AccountId { get; set; }
+    public Guid AccountId { get; set; }
 
-    public required TransactionTypes Type { get; set; }
+    public TransactionTypes Type { get; set; }
 
     public Guid CategoryId { get; set; }
 
-    public required decimal Value { get; set; }
+    public decimal Value { get; set; }
 
     public DateTime CreatedTime { get; set; } = DateTime.Now;
 
-    public required DateOnly CreatedDay { get; set; }
+    public DateOnly CreatedDay { get; set; }
 
     public string? Description { get; set; }
+
+    public Guid? RelatedTransactionId { get; set; }
 }

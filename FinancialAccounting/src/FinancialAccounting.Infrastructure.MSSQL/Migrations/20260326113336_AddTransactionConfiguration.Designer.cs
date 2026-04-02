@@ -4,6 +4,7 @@ using FinancialAccounting.Infrastructure.MSSQL.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FinancialAccounting.Infrastructure.MSSQL.Migrations
 {
     [DbContext(typeof(FinancialAccountingDbContext))]
-    partial class FinancialAccountingDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260326113336_AddTransactionConfiguration")]
+    partial class AddTransactionConfiguration
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -122,9 +125,6 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Migrations
 
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid?>("RelatedTransactionId")
-                        .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("Type")
                         .HasColumnType("int");

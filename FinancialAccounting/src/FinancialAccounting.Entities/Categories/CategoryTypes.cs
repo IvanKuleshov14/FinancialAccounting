@@ -1,5 +1,5 @@
 ﻿public enum CategoryTypes
 {
-    Expense,
-    Income
+    Income = 1,
+    Expense = 2
 }

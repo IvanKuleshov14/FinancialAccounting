@@ -1,4 +1,5 @@
 ﻿using FinancialAccounting.Application.Accounts;
+using FinancialAccounting.Application.Transactions;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -14,6 +15,7 @@ namespace FinancialAccounting.Application
             services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly);
 
             services.AddScoped<IAccountsService, AccountsService>();
+            services.AddScoped<ITransactionsService, TransactionsService>();
 
             return services;
         }

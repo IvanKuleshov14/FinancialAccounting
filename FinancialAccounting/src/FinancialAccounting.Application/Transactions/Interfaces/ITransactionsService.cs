@@ -8,5 +8,7 @@ namespace FinancialAccounting.Application.Transactions
     public interface ITransactionsService
     {
         Task Create(CreateTransactionDto transactionDto, CancellationToken cancellationToken);
+        Task CreateTransfer(CreateTransferDto transferDto, CancellationToken cancellationToken);
+        Task Delete(Guid transactionId, CancellationToken cancellationToken);
     }
 }

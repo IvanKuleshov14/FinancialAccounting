@@ -2,7 +2,7 @@
 {
     public enum TargetTransactionTypes
     {
-        Expense,
-        Income
+        Income = 1,
+        Expense = 2
     }
 }
