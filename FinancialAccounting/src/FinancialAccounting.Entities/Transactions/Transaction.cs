@@ -19,7 +19,7 @@ public class Transaction
 
     public TransactionTypes Type { get; set; }
 
-    public Guid CategoryId { get; set; }
+    public Guid? CategoryId { get; set; }
 
     public decimal Value { get; set; }
 

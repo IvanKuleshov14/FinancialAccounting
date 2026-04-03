@@ -20,12 +20,13 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Repositories
         public async Task UpdateAsync(Guid accountId, string accountName, CancellationToken cancellationToken)
         {
             var account = await _dbContext.Accounts.FindAsync(accountId);
-
-            if(account != null)
+            if(account == null)
             {
-                account.Name = accountName;
-                await _dbContext.SaveChangesAsync();
+                throw new Exception("Счет не найден");
             }
+
+            account.Name = accountName;
+            await _dbContext.SaveChangesAsync();
         }
 
         public async Task DeleteAsync(Guid accountId, CancellationToken cancellationToken)
