@@ -20,13 +20,18 @@ namespace FinancialAccounting.Presenters.Categories
             CancellationToken cancellationToken
             )
         {
-            await _categoryService.AddAsync(request, cancellationToken);
+            await _categoryService.Create(request, cancellationToken);
             return Ok("Category created");
         }
 
-        [HttpGet]
-        public async Task<IActionResult> Update()
+        [HttpPut("{categoryId:guid}")]
+        public async Task<IActionResult> Update(
+            [FromRoute] Guid categoryId,
+            [FromBody] UpdateCategoryDto request,
+            CancellationToken cancellationToken
+            )
         {
+            await _categoryService.Update(categoryId, request, cancellationToken);
             return Ok("Category updated");
         }
 

@@ -17,5 +17,18 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Repositories
             await _dbContext.AddAsync(category);
             await _dbContext.SaveChangesAsync();
         }
+
+        public async Task UpdateAsync(Guid categoryId, string categoryName, CancellationToken cancellationToken)
+        {
+            var category = await _dbContext.Categories.FindAsync(categoryId);
+            if(category == null)
+            {
+                throw new Exception("Категория не найдена");
+            }
+            
+            category.Name = categoryName;
+
+            await _dbContext.SaveChangesAsync();
+        }
     }
 }

@@ -10,16 +10,19 @@ namespace FinancialAccounting.Application.Categories
     {
         private readonly ICategoriesRepository _categoriesRepository;
         private readonly IValidator<CreateCategoryDto> _createCategoryValidotator;
+        private readonly IValidator<UpdateCategoryDto> _updateCategoryValidotator;
         public CategoriesService(
             ICategoriesRepository categoriesRepository,
-            IValidator<CreateCategoryDto> createCategoryValidator)
+            IValidator<CreateCategoryDto> createCategoryValidator,
+            IValidator<UpdateCategoryDto> updateCategoryValidotator)
         {
             _categoriesRepository = categoriesRepository;
             _createCategoryValidotator = createCategoryValidator;
+            _updateCategoryValidotator = updateCategoryValidotator;
         }
 
 
-        public async Task AddAsync(CreateCategoryDto categoryDto, CancellationToken cancellationToken)
+        public async Task Create(CreateCategoryDto categoryDto, CancellationToken cancellationToken)
         {
             var validatorResult = await _createCategoryValidotator.ValidateAsync(categoryDto);
             if (!validatorResult.IsValid)
@@ -35,6 +38,19 @@ namespace FinancialAccounting.Application.Categories
                 );
             
             await _categoriesRepository.AddAsync(category, cancellationToken);
+        }
+
+        public async Task Update(Guid categoryId, UpdateCategoryDto updateCategoryDto, CancellationToken cancellationToken)
+        {
+            var validatorResult = await _updateCategoryValidotator.ValidateAsync(updateCategoryDto, cancellationToken);
+            if (!validatorResult.IsValid)
+            {
+                throw new ValidationException(validatorResult.Errors);
+            }
+
+            var newCategoryName = updateCategoryDto.Name;
+
+            await _categoriesRepository.UpdateAsync(categoryId, newCategoryName, cancellationToken);
         }
     }
 }

@@ -4,6 +4,7 @@ namespace FinancialAccounting.Application.Categories.Interfaces
 {
     public interface ICategoryService
     {
-        Task AddAsync(CreateCategoryDto categoryDto, CancellationToken cancellationToken);
+        Task Create(CreateCategoryDto categoryDto, CancellationToken cancellationToken);
+        Task Update(Guid categoryId, UpdateCategoryDto updateCategoryDto, CancellationToken cancellationToken);
     }
 }
