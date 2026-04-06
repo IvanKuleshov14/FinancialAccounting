@@ -1,4 +1,5 @@
 ﻿using FinancialAccounting.Application.Accounts;
+using FinancialAccounting.Application.Categories.Interfaces;
 using FinancialAccounting.Application.Transactions;
 using FinancialAccounting.Infrastructure.MSSQL.Repositories;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,6 +12,7 @@ namespace FinancialAccounting.Infrastructure.MSSQL
         {
             services.AddScoped<IAccountsRepository, AccountsRepository>();
             services.AddScoped<ITransactionsRepository, TransactionsRepository>();
+            services.AddScoped<ICategoriesRepository, CategoriesRepository>();
 
             return services;
         }
