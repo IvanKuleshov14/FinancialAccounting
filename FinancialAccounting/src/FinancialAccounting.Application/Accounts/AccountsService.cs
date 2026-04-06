@@ -65,7 +65,7 @@ namespace FinancialAccounting.Application
             await _accountsRepository.DeleteAsync(accountId, cancellationToken);
         }
 
-        public async Task CreateAccountTarget(Guid accountId, CreateAccountTargetDto accountTargetDto, CancellationToken cancellationToken)
+        public async Task CreateTarget(Guid accountId, CreateAccountTargetDto accountTargetDto, CancellationToken cancellationToken)
         {
             var validatorResult = await _createAccountTargetValidator.ValidateAsync(accountTargetDto, cancellationToken);
             if (!validatorResult.IsValid)
