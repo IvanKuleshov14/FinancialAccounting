@@ -13,7 +13,8 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Configurations
     {
         public void Configure(EntityTypeBuilder<Transaction> builder)
         {
-            builder.HasKey(t => t.Id);
+            builder.
+                HasKey(t => t.Id);
 
             builder.
                 HasOne<Account>().

@@ -39,5 +39,10 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Repositories
                 await _dbContext.SaveChangesAsync();
             }
         }
+
+        public Task AddTargetAsync(AccountTarget accountTarget, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

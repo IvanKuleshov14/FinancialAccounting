@@ -9,7 +9,8 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Configurations
     {
         public void Configure(EntityTypeBuilder<Category> builder)
         {
-            builder.HasKey(c => c.Id);
+            builder.
+                HasKey(c => c.Id);
 
             builder.
                 Property(c => c.Name).

@@ -8,17 +8,21 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Configurations
     {
         public void Configure(EntityTypeBuilder<Target> builder)
         {
-            builder.HasKey(t => t.Id);
+            builder.
+                HasKey(t => t.Id);
 
-            builder.Property(t => t.Name).
+            builder.
+                Property(t => t.Name).
                 IsRequired().
                 HasMaxLength(30);
 
-            builder.Property(t => t.Total).
+            builder.
+                Property(t => t.Total).
                 HasColumnType("decimal(18,2)").
                 HasDefaultValue(0);
 
-            builder.Property(t => t.Goal).
+            builder.
+                Property(t => t.Goal).
                 HasColumnType("decimal(18,2)").
                 IsRequired();
         }

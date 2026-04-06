@@ -58,6 +58,7 @@ namespace FinancialAccounting.Presenters
             [FromBody] CreateAccountTargetDto request,
             CancellationToken cancellationToken)
         {
+            await CreateAccountTarget(accountId, request, cancellationToken);
             return Ok("AccountTarget created");
         }
     }

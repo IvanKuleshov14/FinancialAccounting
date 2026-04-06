@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace FinancialAccouting.Contracts
+﻿namespace FinancialAccouting.Contracts
 {
     public record UpdateAccountDto(string Name);
 }

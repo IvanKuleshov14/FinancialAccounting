@@ -1,9 +1,6 @@
 ﻿using FinancialAccounting.Application.Transactions;
 using FinancialAccouting.Contracts.Transactions;
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace FinancialAccounting.Presenters.Transactions
 {

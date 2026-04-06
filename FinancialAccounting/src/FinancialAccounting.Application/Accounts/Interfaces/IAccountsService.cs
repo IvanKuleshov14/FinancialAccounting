@@ -7,5 +7,6 @@ namespace FinancialAccounting.Application
         Task Create(CreateAccountDto accountDto, CancellationToken cancellationToken);
         Task Update(Guid accountId, UpdateAccountDto accountDto, CancellationToken cancellationToken);
         Task Delete(Guid accountId, CancellationToken cancellationToken);
+        Task CreateAccountTarget(Guid accountId, CreateAccountTargetDto accountTargetDto, CancellationToken cancellationToken);
     }
 }
