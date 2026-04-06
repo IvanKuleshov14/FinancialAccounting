@@ -1,4 +1,6 @@
 ﻿using FinancialAccounting.Application.Accounts;
+using FinancialAccounting.Application.AccountTargets;
+using FinancialAccounting.Application.AccountTargets.Interfaces;
 using FinancialAccounting.Application.Categories;
 using FinancialAccounting.Application.Categories.Interfaces;
 using FinancialAccounting.Application.Transactions;
@@ -17,6 +19,7 @@ namespace FinancialAccounting.Application
             services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly);
 
             services.AddScoped<IAccountsService, AccountsService>();
+            services.AddScoped<IAccountTargetsService, AccountTargetsService>();
             services.AddScoped<ITransactionsService, TransactionsService>();
             services.AddScoped<ICategoryService, CategoriesService>();
 

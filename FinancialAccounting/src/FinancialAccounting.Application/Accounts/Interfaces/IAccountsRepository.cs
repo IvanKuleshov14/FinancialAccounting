@@ -4,9 +4,9 @@ namespace FinancialAccounting.Application.Accounts
 {
     public interface IAccountsRepository
     {
-        Task AddAsync(Account account, CancellationToken cancellationToken);
-        Task DeleteAsync(Guid accountId, CancellationToken cancellationToken);
-        Task UpdateAsync(Guid accountId, string accountName, CancellationToken cancellationToken);
-        Task AddTargetAsync(AccountTarget accountTarget, CancellationToken cancellationToken);
+        Task AddAsync(Account Account, CancellationToken CancellationToken);
+        Task DeleteAsync(Guid AccountId, CancellationToken CancellationToken);
+        Task UpdateAsync(Guid AccountId, string AccountName, CancellationToken CancellationToken);
+        Task AddTargetAsync(AccountTarget AccountTarget, CancellationToken CancellationToken);
     }
 }

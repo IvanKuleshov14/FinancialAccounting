@@ -18,12 +18,12 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Configurations
 
             builder.
                 Property(t => t.Total).
-                HasColumnType("decimal(18,2)").
+                HasPrecision(18, 2).
                 HasDefaultValue(0);
 
             builder.
                 Property(t => t.Goal).
-                HasColumnType("decimal(18,2)").
+                HasPrecision(18, 2).
                 IsRequired();
         }
     }

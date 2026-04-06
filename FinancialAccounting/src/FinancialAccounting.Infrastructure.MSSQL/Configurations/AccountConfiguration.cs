@@ -32,7 +32,7 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Configurations
 
             builder.
                 Property(a => a.Total).
-                HasColumnType("decimal(18,2)").
+                HasPrecision(18, 2).
                 HasDefaultValue(0);
         }
     }

@@ -4,9 +4,9 @@ namespace FinancialAccounting.Application
 {
     public interface IAccountsService
     {
-        Task Create(CreateAccountDto accountDto, CancellationToken cancellationToken);
-        Task Update(Guid accountId, UpdateAccountDto accountDto, CancellationToken cancellationToken);
-        Task Delete(Guid accountId, CancellationToken cancellationToken);
-        Task CreateTarget(Guid accountId, CreateAccountTargetDto accountTargetDto, CancellationToken cancellationToken);
+        Task Create(CreateAccountDto AccountDto, CancellationToken CancellationToken);
+        Task Update(Guid AccountId, UpdateAccountDto AccountDto, CancellationToken CancellationToken);
+        Task Delete(Guid AccountId, CancellationToken cancellationToken);
+        Task CreateTarget(Guid AccountId, CreateAccountTargetDto AccountTargetDto, CancellationToken CancellationToken);
     }
 }
