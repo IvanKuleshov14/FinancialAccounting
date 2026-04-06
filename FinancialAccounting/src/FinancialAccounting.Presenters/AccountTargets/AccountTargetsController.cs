@@ -28,5 +28,15 @@ namespace FinancialAccounting.Presenters.AccountTargets
             await _accountTargetsService.Update(accountTargetId, request, cancellationToken);
             return Ok("Target updated");
         }
+
+        [HttpDelete("{accountTargetId:guid}")]
+        public async Task<IActionResult> Delete(
+            [FromRoute] Guid accountTargetId,
+            CancellationToken cancellationToken
+            )
+        {
+            await _accountTargetsService.Delete(accountTargetId, cancellationToken);
+            return Ok("Target deleted");
+        }
     }
 }

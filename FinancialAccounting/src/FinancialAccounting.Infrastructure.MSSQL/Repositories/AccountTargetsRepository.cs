@@ -25,5 +25,17 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Repositories
 
             await _dbContext.SaveChangesAsync();
         }
+
+        public async Task DeleteAsync(Guid accountTargetId, CancellationToken cancellationToken)
+        {
+            var accountTarget = await _dbContext.AccountTargets.FirstOrDefaultAsync(t => t.Id == accountTargetId);
+            if (accountTarget == null)
+            {
+                throw new Exception("Цель не найдена");
+            }
+
+            _dbContext.Remove(accountTarget);
+            await _dbContext.SaveChangesAsync();
+        }
     }
 }

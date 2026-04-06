@@ -2,6 +2,7 @@
 {
     public interface IAccountTargetsRepository
     {
-        Task UpdateAsync(Guid AccountTargetId, string AccountTargetName, decimal AccountTargetGoal, CancellationToken CancellationToken);
+        Task UpdateAsync(Guid accountTargetId, string accountTargetName, decimal accountTargetGoal, CancellationToken cancellationToken);
+        Task DeleteAsync(Guid accountTargetId, CancellationToken cancellationToken);
     }
 }

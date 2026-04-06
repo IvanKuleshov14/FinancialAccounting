@@ -16,7 +16,6 @@ namespace FinancialAccounting.Application.AccountTargets
             _updateAccountTargetValidator = updateAccountTargetValidator;
         }
 
-
         public async Task Update(Guid accountTargetId, UpdateAccountTargetDto updateAccountTargetDto, CancellationToken cancellationToken)
         {
             var validatorResult = await _updateAccountTargetValidator.ValidateAsync(updateAccountTargetDto, cancellationToken);
@@ -29,6 +28,11 @@ namespace FinancialAccounting.Application.AccountTargets
             var newAccountTargetGoal = updateAccountTargetDto.Goal;
 
             await _accountTargetsRepository.UpdateAsync(accountTargetId, newAccountTargetName, newAccountTargetGoal, cancellationToken);
+        }
+
+        public async Task Delete(Guid accounttargetId, CancellationToken cancellationToken)
+        {
+            await _accountTargetsRepository.DeleteAsync(accounttargetId, cancellationToken);
         }
     }
 }
