@@ -2,7 +2,7 @@
 
 public class Transaction
 {
-    public Transaction(Guid id, Guid accountId, TransactionTypes type, decimal value, DateOnly createdDay, string? description, Guid? relatedTransactionId)
+    public Transaction(Guid id, Guid accountId, TransactionTypes type, decimal value, DateOnly createdDay, string? description, Guid? relatedTransactionId, Guid? categoryId)
     {
         Id = id;
         AccountId = accountId;
@@ -11,6 +11,7 @@ public class Transaction
         CreatedDay = createdDay;
         Description = description;
         RelatedTransactionId = relatedTransactionId;
+        CategoryId = categoryId;
     }
 
     public Guid Id { get; set; }
@@ -19,7 +20,7 @@ public class Transaction
 
     public TransactionTypes Type { get; set; }
 
-    public Guid CategoryId { get; set; }
+    public Guid? CategoryId { get; set; }
 
     public decimal Value { get; set; }
 

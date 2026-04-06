@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using FinancialAccounting.Entities.Categories;
 
 namespace FinancialAccounting.Infrastructure.MSSQL.Configurations
 {
@@ -12,7 +13,8 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Configurations
     {
         public void Configure(EntityTypeBuilder<Transaction> builder)
         {
-            builder.HasKey(t => t.Id);
+            builder.
+                HasKey(t => t.Id);
 
             builder.
                 HasOne<Account>().
@@ -21,11 +23,12 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Configurations
                 IsRequired().
                 OnDelete(DeleteBehavior.Cascade);
 
-            //builder.
-            //    HasOne<Category>().
-            //    WithMany().
-            //    HasForeignKey(t => t.CategoryId).
-            //    OnDelete(DeleteBehavior.Restrict); ???
+            builder.
+                HasOne<Category>().
+                WithMany().
+                HasForeignKey(t => t.CategoryId).
+                OnDelete(DeleteBehavior.Restrict).
+                IsRequired(false);
 
 
             builder.

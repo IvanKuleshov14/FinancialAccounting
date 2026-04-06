@@ -18,7 +18,5 @@ public class Account
 
     public decimal Total { get; set; } = 0;
 
-    public Guid? TargetId { get; set; }
-
     public AccountTarget? Target { get; set; }
 }

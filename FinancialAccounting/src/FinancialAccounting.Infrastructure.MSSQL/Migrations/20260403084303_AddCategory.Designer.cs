@@ -4,6 +4,7 @@ using FinancialAccounting.Infrastructure.MSSQL.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FinancialAccounting.Infrastructure.MSSQL.Migrations
 {
     [DbContext(typeof(FinancialAccountingDbContext))]
-    partial class FinancialAccountingDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260403084303_AddCategory")]
+    partial class AddCategory
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -33,9 +36,11 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Migrations
                         .HasMaxLength(30)
                         .HasColumnType("nvarchar(30)");
 
+                    b.Property<Guid?>("TargetId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<decimal>("Total")
                         .ValueGeneratedOnAdd()
-                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)")
                         .HasDefaultValue(0m);
 
@@ -43,6 +48,10 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("TargetId")
+                        .IsUnique()
+                        .HasFilter("[TargetId] IS NOT NULL");
 
                     b.HasIndex("UserId");
 
@@ -55,27 +64,19 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid>("AccountId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<decimal>("Goal")
-                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("nvarchar(30)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal>("Total")
                         .HasColumnType("decimal(18,2)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AccountId")
-                        .IsUnique();
-
-                    b.ToTable("AccountTargets");
+                    b.ToTable("AccountTarget");
                 });
 
             modelBuilder.Entity("FinancialAccounting.Entities.Categories.Category", b =>
@@ -83,9 +84,6 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -107,7 +105,6 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<decimal>("Goal")
-                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("Name")
@@ -117,7 +114,6 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Migrations
 
                     b.Property<decimal>("Total")
                         .ValueGeneratedOnAdd()
-                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)")
                         .HasDefaultValue(0m);
 
@@ -168,15 +164,13 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Migrations
                     b.ToTable("Transactions");
                 });
 
-            modelBuilder.Entity("FinancialAccounting.Entities.Accounts.AccountTarget", b =>
+            modelBuilder.Entity("FinancialAccounting.Entities.Accounts.Account", b =>
                 {
-                    b.HasOne("FinancialAccounting.Entities.Accounts.Account", "Account")
-                        .WithOne("Target")
-                        .HasForeignKey("FinancialAccounting.Entities.Accounts.AccountTarget", "AccountId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                    b.HasOne("FinancialAccounting.Entities.Accounts.AccountTarget", "Target")
+                        .WithOne()
+                        .HasForeignKey("FinancialAccounting.Entities.Accounts.Account", "TargetId");
 
-                    b.Navigation("Account");
+                    b.Navigation("Target");
                 });
 
             modelBuilder.Entity("FinancialAccounting.Entities.Transactions.Transaction", b =>
@@ -191,11 +185,6 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Migrations
                         .WithMany()
                         .HasForeignKey("CategoryId")
                         .OnDelete(DeleteBehavior.Restrict);
-                });
-
-            modelBuilder.Entity("FinancialAccounting.Entities.Accounts.Account", b =>
-                {
-                    b.Navigation("Target");
                 });
 #pragma warning restore 612, 618
         }

@@ -12,7 +12,8 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Configurations
     {
         public void Configure(EntityTypeBuilder<Account> builder)
         {
-            builder.HasKey(a => a.Id);
+            builder.
+                HasKey(a => a.Id);
 
             //builder.
             //    HasOne<User>().
@@ -24,19 +25,15 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Configurations
             builder.
                 HasIndex(a => a.UserId);
 
-            builder.Property(a => a.Name).
+            builder.
+                Property(a => a.Name).
                 IsRequired().
                 HasMaxLength(30);
 
-            builder.Property(a => a.Total).
-                HasColumnType("decimal(18,2)").
-                HasDefaultValue(0);
-
             builder.
-                HasOne(a => a.Target).
-                WithOne().
-                HasForeignKey<Account>(a => a.TargetId).
-                IsRequired(false);
+                Property(a => a.Total).
+                HasPrecision(18, 2).
+                HasDefaultValue(0);
         }
     }
 }

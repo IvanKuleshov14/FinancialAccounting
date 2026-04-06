@@ -36,7 +36,8 @@ namespace FinancialAccounting.Application.Transactions
                 transactionDto.Value,
                 transactionDto.CreatedDay,
                 transactionDto.Description,
-                null
+                null,
+                transactionDto.CategoryId
                 );
 
             await _transactionsRepository.AddAsync(transaction, cancellationToken);
@@ -60,7 +61,8 @@ namespace FinancialAccounting.Application.Transactions
                 transferDto.Value,
                 transferDto.CreatedDay,
                 transferDto.Description,
-                linkId
+                linkId,
+                null
                 );
 
             var transactionIncomeId = Guid.NewGuid();
@@ -71,7 +73,8 @@ namespace FinancialAccounting.Application.Transactions
                 transferDto.Value,
                 transferDto.CreatedDay,
                 transferDto.Description,
-                linkId
+                linkId,
+                null
                 );
 
             await _transactionsRepository.AddTransferAsync(transactionExpense, transactionIncome, cancellationToken);

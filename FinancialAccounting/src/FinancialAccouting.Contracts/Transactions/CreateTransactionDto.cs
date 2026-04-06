@@ -8,6 +8,7 @@ namespace FinancialAccouting.Contracts.Transactions
         decimal Value,
         DateOnly CreatedDay,
         string? Description,
-        Guid? RelatedTransactionId)
+        Guid? RelatedTransactionId,
+        Guid? CategoryId)
     { }
 }

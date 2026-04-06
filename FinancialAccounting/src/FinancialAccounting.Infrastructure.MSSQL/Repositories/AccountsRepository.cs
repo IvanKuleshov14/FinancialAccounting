@@ -1,6 +1,7 @@
 ﻿using FinancialAccounting.Application.Accounts;
 using FinancialAccounting.Entities.Accounts;
 using FinancialAccounting.Infrastructure.MSSQL.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace FinancialAccounting.Infrastructure.MSSQL.Repositories
 {
@@ -20,12 +21,13 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Repositories
         public async Task UpdateAsync(Guid accountId, string accountName, CancellationToken cancellationToken)
         {
             var account = await _dbContext.Accounts.FindAsync(accountId);
-
-            if(account != null)
+            if(account == null)
             {
-                account.Name = accountName;
-                await _dbContext.SaveChangesAsync();
+                throw new Exception("Счет не найден");
             }
+
+            account.Name = accountName;
+            await _dbContext.SaveChangesAsync();
         }
 
         public async Task DeleteAsync(Guid accountId, CancellationToken cancellationToken)
@@ -37,6 +39,22 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Repositories
                 _dbContext.Accounts.Remove(account);
                 await _dbContext.SaveChangesAsync();
             }
+        }
+
+        public async Task AddTargetAsync(AccountTarget accountTarget, CancellationToken cancellationToken)
+        {
+            var account = await _dbContext.Accounts.Include(a => a.Target).FirstOrDefaultAsync(a => a.Id == accountTarget.AccountId);
+            if(account == null)
+            {
+                throw new Exception("Счет не найден");
+            }
+            if(account.Target != null)
+            {
+                throw new Exception("У этого счета уже есть цель");
+            }
+
+            await _dbContext.AddAsync(accountTarget);
+            await _dbContext.SaveChangesAsync();
         }
     }
 }
