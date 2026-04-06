@@ -6,5 +6,6 @@ namespace FinancialAccounting.Application.Categories.Interfaces
     {
         Task AddAsync(Category category, CancellationToken cancellationToken);
         Task UpdateAsync(Guid categoryId, string categoryName, CancellationToken cancellationToken);
+        Task DeleteAsync(Guid categoryId, CancellationToken cancellationToken);
     }
 }

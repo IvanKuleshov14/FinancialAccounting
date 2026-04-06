@@ -35,9 +35,13 @@ namespace FinancialAccounting.Presenters.Categories
             return Ok("Category updated");
         }
 
-        [HttpDelete]
-        public async Task<IActionResult> Delete()
+        [HttpDelete("{categoryId:guid}")]
+        public async Task<IActionResult> Delete(
+            [FromRoute] Guid categoryId,
+            CancellationToken cancellationToken
+            )
         {
+            await _categoryService.Delete(categoryId, cancellationToken);
             return Ok("Category deleted");
         }
     }

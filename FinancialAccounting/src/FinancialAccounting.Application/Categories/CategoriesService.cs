@@ -52,5 +52,10 @@ namespace FinancialAccounting.Application.Categories
 
             await _categoriesRepository.UpdateAsync(categoryId, newCategoryName, cancellationToken);
         }
+
+        public async Task Delete(Guid categoryId, CancellationToken cancellationToken)
+        {
+            await _categoriesRepository.DeleteAsync(categoryId, cancellationToken);
+        }
     }
 }

@@ -12,5 +12,6 @@
         public Guid Id { get; set; }
         public string Name { get; set; }
         public CategoryTypes Type { get; set; }
+        public bool IsDeleted { get; set; } = false;
     }
 }
