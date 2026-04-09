@@ -23,5 +23,26 @@ namespace FinancialAccounting.Presenters.Targets
             await _targetsService.Create(request, cancellationToken);
             return Ok("Target created");
         }
+
+        [HttpPut("{targetId:guid}")]
+        public async Task<IActionResult> Update(
+            [FromRoute] Guid targetId,
+            [FromBody] UpdateTargetDto request,
+            CancellationToken cancellationToken
+            )
+        {
+            await _targetsService.Update(targetId, request, cancellationToken);
+            return Ok("Target updated");
+        }
+
+        [HttpDelete("{targetId:guid}")]
+        public async Task<IActionResult> Delete(
+            [FromRoute] Guid targetId,
+            CancellationToken cancellationToken
+            )
+        {
+            await _targetsService.Delete(targetId, cancellationToken);
+            return Ok("Target deleted");
+        }
     }
 }

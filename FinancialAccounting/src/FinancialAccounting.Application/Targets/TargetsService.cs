@@ -10,12 +10,15 @@ namespace FinancialAccounting.Application.Targets
     {
         private readonly ITargetsRepository _targetsRepository;
         private readonly IValidator<CreateTargetDto> _createValidator;
+        private readonly IValidator<UpdateTargetDto> _updateValidator;
         public TargetsService(
             ITargetsRepository targetsRepository,
-            IValidator<CreateTargetDto> createTargetValidator)
+            IValidator<CreateTargetDto> createTargetValidator,
+            IValidator<UpdateTargetDto> updateValidator)
         {
             _targetsRepository = targetsRepository;
             _createValidator = createTargetValidator;
+            _updateValidator = updateValidator;
         }
 
         public async Task Create(CreateTargetDto targetDto, CancellationToken cancellationToken)
@@ -36,6 +39,25 @@ namespace FinancialAccounting.Application.Targets
                 );
 
             await _targetsRepository.AddAsync(target, cancellationToken);
+        }
+
+        public async Task Update(Guid targetId, UpdateTargetDto updateTargetDto, CancellationToken cancellationToken)
+        {
+            var validatorResult = await _updateValidator.ValidateAsync(updateTargetDto, cancellationToken);
+            if (!validatorResult.IsValid)
+            {
+                throw new ValidationException(validatorResult.Errors);
+            }
+
+            var newTargetName = updateTargetDto.name;
+            var newTargetGoal = updateTargetDto.goal;
+
+            await _targetsRepository.UpdateAsync(targetId, newTargetName, newTargetGoal, cancellationToken);
+        }
+
+        public async Task Delete(Guid targetId, CancellationToken cancellationToken)
+        {
+            await _targetsRepository.DeleteAsync(targetId, cancellationToken);
         }
     }
 }
