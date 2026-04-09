@@ -24,5 +24,15 @@ namespace FinancialAccounting.Presenters.TargetTransactions
             await _targetTransactionsService.Create(request, cancellationToken);
             return Ok("Target transaction created");
         }
+
+        [HttpDelete("{targetTransactionId:guid}")]
+        public async Task<IActionResult> Delete(
+            [FromRoute] Guid targetTransactionId,
+            CancellationToken cancellationToken
+            )
+        {
+            await _targetTransactionsService.Delete(targetTransactionId, cancellationToken);
+            return Ok("Target transaction deleted");
+        }
     }
 }
