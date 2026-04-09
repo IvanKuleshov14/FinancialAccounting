@@ -26,7 +26,7 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Repositories
             {
                 account.Total += transaction.Value;
             }
-            else if(transaction.Type == TransactionTypes.Expense)
+            else
             {
                 if(transaction.Value > account.Total)
                 {
