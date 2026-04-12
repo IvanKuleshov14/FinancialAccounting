@@ -1,6 +1,7 @@
 ﻿using FinancialAccounting.Application.Targets.Interfaces;
 using FinancialAccounting.Entities.Targets;
 using FinancialAccounting.Infrastructure.MSSQL.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace FinancialAccounting.Infrastructure.MSSQL.Repositories
 {
@@ -41,6 +42,13 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Repositories
             }
             _dbContext.Targets.Remove(target);
             await _dbContext.SaveChangesAsync();
+        }
+
+        public async Task<List<Target>> GetAllTargetsAsync(CancellationToken cancellationToken)
+        {
+            return await _dbContext.Targets.
+                AsNoTracking().
+                ToListAsync();
         }
     }
 }
