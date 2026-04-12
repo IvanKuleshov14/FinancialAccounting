@@ -49,7 +49,14 @@ namespace FinancialAccounting.Presenters
             [FromRoute] Guid accountId,
             CancellationToken cancellationToken)
         {
-            return Ok("Account geted");
+            var result = await _accountService.GetAccount(accountId, cancellationToken);
+
+            if(result == null)
+            {
+                return NotFound("Счет не найден");
+            }
+
+            return Ok(result);
         }
 
         [HttpPost("{accountId:guid}/account_targets")]

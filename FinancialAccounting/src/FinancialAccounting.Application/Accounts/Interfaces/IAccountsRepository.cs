@@ -8,5 +8,6 @@ namespace FinancialAccounting.Application.Accounts
         Task DeleteAsync(Guid AccountId, CancellationToken CancellationToken);
         Task UpdateAsync(Guid AccountId, string AccountName, CancellationToken CancellationToken);
         Task AddTargetAsync(AccountTarget AccountTarget, CancellationToken CancellationToken);
+        Task<Account?> GetAccountByIdAsync(Guid Id, CancellationToken cancellationToken);
     }
 }

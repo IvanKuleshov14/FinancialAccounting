@@ -1,6 +1,7 @@
 ﻿using FinancialAccounting.Application.Accounts;
 using FinancialAccounting.Entities.Accounts;
 using FinancialAccounting.Infrastructure.MSSQL.Data;
+using FinancialAccouting.Contracts.Accounts;
 using Microsoft.EntityFrameworkCore;
 
 namespace FinancialAccounting.Infrastructure.MSSQL.Repositories
@@ -55,6 +56,14 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Repositories
 
             await _dbContext.AddAsync(accountTarget);
             await _dbContext.SaveChangesAsync();
+        }
+
+        public async Task<Account?> GetAccountByIdAsync(Guid id, CancellationToken cancellationToken)
+        {
+            return await _dbContext.Accounts.
+                Include(a => a.Target).
+                AsNoTracking().
+                FirstOrDefaultAsync(a => a.Id == id);
         }
     }
 }
