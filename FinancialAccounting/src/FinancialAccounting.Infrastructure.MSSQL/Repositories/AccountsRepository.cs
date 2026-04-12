@@ -65,5 +65,13 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Repositories
                 AsNoTracking().
                 FirstOrDefaultAsync(a => a.Id == id);
         }
+
+        public async Task<List<Account>> GetAllAccountsAsync(CancellationToken cancellationToken)
+        {
+            return await _dbContext.Accounts.
+                Include(a => a.Target).
+                AsNoTracking().
+                ToListAsync();
+        }
     }
 }

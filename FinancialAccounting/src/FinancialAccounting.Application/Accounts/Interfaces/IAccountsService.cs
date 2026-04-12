@@ -10,5 +10,6 @@ namespace FinancialAccounting.Application
         Task Delete(Guid AccountId, CancellationToken cancellationToken);
         Task CreateTarget(Guid AccountId, CreateAccountTargetDto AccountTargetDto, CancellationToken CancellationToken);
         Task<GetAccountDto?> GetAccount(Guid id, CancellationToken cancellationToken);
+        Task<List<GetAccountDto>> GetAllAccounts(CancellationToken cancellationToken);
     }
 }

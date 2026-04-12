@@ -17,7 +17,5 @@ public class AccountTarget
 
     public string Name { get; set; }
 
-    public decimal Total { get; set; } = 0;
-
     public decimal Goal { get; set; }
 }

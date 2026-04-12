@@ -1,6 +1,8 @@
 ﻿using FinancialAccounting.Application;
 using FinancialAccouting.Contracts;
+using FinancialAccouting.Contracts.Accounts;
 using Microsoft.AspNetCore.Mvc;
+using System.Reflection.Metadata.Ecma335;
 
 namespace FinancialAccounting.Presenters
 {
@@ -57,6 +59,14 @@ namespace FinancialAccounting.Presenters
             }
 
             return Ok(result);
+        }
+
+        [HttpGet]
+        public async Task<IEnumerable<GetAccountDto>> GetAllAccounts(
+            CancellationToken cancellationToken)
+        {
+            var result = await _accountService.GetAllAccounts(cancellationToken);
+            return result;
         }
 
         [HttpPost("{accountId:guid}/account_targets")]
