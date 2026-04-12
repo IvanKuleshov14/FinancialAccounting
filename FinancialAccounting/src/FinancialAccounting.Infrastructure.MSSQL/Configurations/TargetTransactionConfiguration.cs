@@ -1,32 +1,23 @@
-﻿using FinancialAccounting.Entities.Transactions;
-using FinancialAccounting.Entities.Accounts;
+﻿using FinancialAccounting.Entities.TargetTransactions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using FinancialAccounting.Entities.Categories;
+using FinancialAccounting.Entities.Targets;
 
 namespace FinancialAccounting.Infrastructure.MSSQL.Configurations
 {
-    public class TransactionConfiguration : IEntityTypeConfiguration<Transaction>
+    public class TargetTransactionConfiguration : IEntityTypeConfiguration<TargetTransaction>
     {
-        public void Configure(EntityTypeBuilder<Transaction> builder)
+        public void Configure(EntityTypeBuilder<TargetTransaction> builder)
         {
             builder.
                 HasKey(t => t.Id);
 
             builder.
-                HasOne<Account>().
+                HasOne<Target>().
                 WithMany().
-                HasForeignKey(t => t.AccountId).
+                HasForeignKey(t => t.TargetId).
                 IsRequired().
                 OnDelete(DeleteBehavior.Cascade);
-
-            builder.
-                HasOne<Category>().
-                WithMany().
-                HasForeignKey(t => t.CategoryId).
-                OnDelete(DeleteBehavior.Restrict).
-                IsRequired(false);
-
 
             builder.
                 Property(t => t.Value).

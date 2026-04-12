@@ -4,6 +4,7 @@ using FinancialAccounting.Infrastructure.MSSQL.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FinancialAccounting.Infrastructure.MSSQL.Migrations
 {
     [DbContext(typeof(FinancialAccountingDbContext))]
-    partial class FinancialAccountingDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260407121649_AddUserIdColumn")]
+    partial class AddUserIdColumn
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -100,41 +103,6 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Migrations
                     b.ToTable("Categories");
                 });
 
-            modelBuilder.Entity("FinancialAccounting.Entities.TargetTransactions.TargetTransaction", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateOnly>("CreatedDay")
-                        .HasColumnType("date");
-
-                    b.Property<DateTime>("CreatedTime")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<Guid>("TargetId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("Type")
-                        .HasColumnType("int");
-
-                    b.Property<decimal>("Value")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("TargetId");
-
-                    b.ToTable("TargetTransactions");
-                });
-
             modelBuilder.Entity("FinancialAccounting.Entities.Targets.Target", b =>
                 {
                     b.Property<Guid>("Id")
@@ -185,8 +153,7 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Migrations
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.Property<string>("Description")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<Guid?>("RelatedTransactionId")
                         .HasColumnType("uniqueidentifier");
@@ -216,15 +183,6 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Migrations
                         .IsRequired();
 
                     b.Navigation("Account");
-                });
-
-            modelBuilder.Entity("FinancialAccounting.Entities.TargetTransactions.TargetTransaction", b =>
-                {
-                    b.HasOne("FinancialAccounting.Entities.Targets.Target", null)
-                        .WithMany()
-                        .HasForeignKey("TargetId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("FinancialAccounting.Entities.Transactions.Transaction", b =>
