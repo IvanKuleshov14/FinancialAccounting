@@ -34,5 +34,17 @@ namespace FinancialAccounting.Presenters.TargetTransactions
             await _targetTransactionsService.Delete(targetTransactionId, cancellationToken);
             return Ok("Target transaction deleted");
         }
+
+        [HttpGet("{targetId:guid}")]
+        public async Task<IEnumerable<GetTargetTransactionListDto>> GetTargetTransactionsByTargetId(
+            [FromRoute] Guid targetId,
+            CancellationToken cancellationToken,
+            [FromQuery] int page = 1,
+            [FromQuery] int limit = 10
+            )
+        {
+            var result = await _targetTransactionsService.GetTargetTransactionsByTargetId(targetId, page, limit, cancellationToken);
+            return result;
+        }
     }
 }

@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FinancialAccounting.Infrastructure.MSSQL.Migrations
 {
     [DbContext(typeof(FinancialAccountingDbContext))]
-    [Migration("20260406103636_UpdateCategoryEntity")]
-    partial class UpdateCategoryEntity
+    [Migration("20260413101233_Clean")]
+    partial class Clean
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -36,11 +36,9 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Migrations
                         .HasMaxLength(30)
                         .HasColumnType("nvarchar(30)");
 
-                    b.Property<Guid?>("TargetId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<decimal>("Total")
                         .ValueGeneratedOnAdd()
+                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)")
                         .HasDefaultValue(0m);
 
@@ -48,10 +46,6 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("TargetId")
-                        .IsUnique()
-                        .HasFilter("[TargetId] IS NOT NULL");
 
                     b.HasIndex("UserId");
 
@@ -64,19 +58,24 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<decimal>("Goal")
+                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<decimal>("Total")
-                        .HasColumnType("decimal(18,2)");
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
 
                     b.HasKey("Id");
 
-                    b.ToTable("AccountTarget");
+                    b.HasIndex("AccountId")
+                        .IsUnique();
+
+                    b.ToTable("AccountTargets");
                 });
 
             modelBuilder.Entity("FinancialAccounting.Entities.Categories.Category", b =>
@@ -101,6 +100,41 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Migrations
                     b.ToTable("Categories");
                 });
 
+            modelBuilder.Entity("FinancialAccounting.Entities.TargetTransactions.TargetTransaction", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateOnly>("CreatedDay")
+                        .HasColumnType("date");
+
+                    b.Property<DateTime>("CreatedTime")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<Guid>("TargetId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("Value")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TargetId");
+
+                    b.ToTable("TargetTransactions");
+                });
+
             modelBuilder.Entity("FinancialAccounting.Entities.Targets.Target", b =>
                 {
                     b.Property<Guid>("Id")
@@ -108,6 +142,7 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<decimal>("Goal")
+                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("Name")
@@ -117,8 +152,12 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Migrations
 
                     b.Property<decimal>("Total")
                         .ValueGeneratedOnAdd()
+                        .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)")
                         .HasDefaultValue(0m);
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
 
@@ -146,7 +185,8 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Migrations
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.Property<string>("Description")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<Guid?>("RelatedTransactionId")
                         .HasColumnType("uniqueidentifier");
@@ -167,27 +207,49 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Migrations
                     b.ToTable("Transactions");
                 });
 
-            modelBuilder.Entity("FinancialAccounting.Entities.Accounts.Account", b =>
+            modelBuilder.Entity("FinancialAccounting.Entities.Accounts.AccountTarget", b =>
                 {
-                    b.HasOne("FinancialAccounting.Entities.Accounts.AccountTarget", "Target")
-                        .WithOne()
-                        .HasForeignKey("FinancialAccounting.Entities.Accounts.Account", "TargetId");
+                    b.HasOne("FinancialAccounting.Entities.Accounts.Account", "Account")
+                        .WithOne("Target")
+                        .HasForeignKey("FinancialAccounting.Entities.Accounts.AccountTarget", "AccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Account");
+                });
+
+            modelBuilder.Entity("FinancialAccounting.Entities.TargetTransactions.TargetTransaction", b =>
+                {
+                    b.HasOne("FinancialAccounting.Entities.TargetTransactions.TargetTransaction", "Target")
+                        .WithMany()
+                        .HasForeignKey("TargetId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.Navigation("Target");
                 });
 
             modelBuilder.Entity("FinancialAccounting.Entities.Transactions.Transaction", b =>
                 {
-                    b.HasOne("FinancialAccounting.Entities.Accounts.Account", null)
+                    b.HasOne("FinancialAccounting.Entities.Accounts.Account", "Account")
                         .WithMany()
                         .HasForeignKey("AccountId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("FinancialAccounting.Entities.Categories.Category", null)
+                    b.HasOne("FinancialAccounting.Entities.Categories.Category", "Category")
                         .WithMany()
                         .HasForeignKey("CategoryId")
                         .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Account");
+
+                    b.Navigation("Category");
+                });
+
+            modelBuilder.Entity("FinancialAccounting.Entities.Accounts.Account", b =>
+                {
+                    b.Navigation("Target");
                 });
 #pragma warning restore 612, 618
         }

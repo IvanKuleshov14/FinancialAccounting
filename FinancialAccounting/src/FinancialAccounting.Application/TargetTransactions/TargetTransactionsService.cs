@@ -2,6 +2,8 @@
 using FinancialAccounting.Entities.TargetTransactions;
 using FinancialAccouting.Contracts.TargetTransactions;
 using FluentValidation;
+using Newtonsoft.Json.Linq;
+using System.Transactions;
 
 namespace FinancialAccounting.Application.TargetTransactions
 {
@@ -42,6 +44,21 @@ namespace FinancialAccounting.Application.TargetTransactions
         public async Task Delete(Guid targetTransactionId, CancellationToken cancellationToken)
         {
             await _targetTransactionsRepository.DeleteAsync(targetTransactionId, cancellationToken);
+        }
+
+        public async Task<List<GetTargetTransactionListDto>> GetTargetTransactionsByTargetId(Guid targetId, int page, int limit, CancellationToken cancellationToken)
+        {
+            var transactions = await _targetTransactionsRepository.GetTargetTransactionByTargetIdAsync(targetId, page, limit, cancellationToken);
+
+            return transactions.Select(transaction => new GetTargetTransactionListDto(
+                transaction.Id,
+                transaction.Target.Name,
+                transaction.Value,
+                (int)transaction.Type,
+                transaction.Description,
+                transaction.CreatedDay,
+                transaction.CreatedTime
+                )).ToList();
         }
     }
 }

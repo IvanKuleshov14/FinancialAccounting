@@ -217,11 +217,13 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Migrations
 
             modelBuilder.Entity("FinancialAccounting.Entities.TargetTransactions.TargetTransaction", b =>
                 {
-                    b.HasOne("FinancialAccounting.Entities.Targets.Target", null)
+                    b.HasOne("FinancialAccounting.Entities.Targets.Target", "Target")
                         .WithMany()
                         .HasForeignKey("TargetId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Target");
                 });
 
             modelBuilder.Entity("FinancialAccounting.Entities.Transactions.Transaction", b =>
