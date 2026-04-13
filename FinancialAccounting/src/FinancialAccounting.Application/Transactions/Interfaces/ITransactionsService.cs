@@ -10,5 +10,6 @@ namespace FinancialAccounting.Application.Transactions
         Task Create(CreateTransactionDto transactionDto, CancellationToken cancellationToken);
         Task CreateTransfer(CreateTransferDto transferDto, CancellationToken cancellationToken);
         Task Delete(Guid transactionId, CancellationToken cancellationToken);
+        Task<List<GetTransactionListDto>> GetTransactions (int page, int limit, CancellationToken cancellationToken);
     }
 }

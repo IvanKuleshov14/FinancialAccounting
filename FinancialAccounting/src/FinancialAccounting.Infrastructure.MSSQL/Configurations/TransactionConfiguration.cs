@@ -1,8 +1,6 @@
 ﻿using FinancialAccounting.Entities.Transactions;
-using FinancialAccounting.Entities.Accounts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using FinancialAccounting.Entities.Categories;
 
 namespace FinancialAccounting.Infrastructure.MSSQL.Configurations
 {
@@ -14,14 +12,14 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Configurations
                 HasKey(t => t.Id);
 
             builder.
-                HasOne<Account>().
+                HasOne(t => t.Account).
                 WithMany().
                 HasForeignKey(t => t.AccountId).
                 IsRequired().
                 OnDelete(DeleteBehavior.Cascade);
 
             builder.
-                HasOne<Category>().
+                HasOne(t => t.Category).
                 WithMany().
                 HasForeignKey(t => t.CategoryId).
                 OnDelete(DeleteBehavior.Restrict).

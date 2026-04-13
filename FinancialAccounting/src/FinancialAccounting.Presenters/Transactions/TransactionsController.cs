@@ -42,5 +42,14 @@ namespace FinancialAccounting.Presenters.Transactions
             return Ok("Transaction deleted");
         }
 
+        [HttpGet]
+        public async Task<IEnumerable<GetTransactionListDto>> GetTransactions(
+            CancellationToken cancellationToken,
+            [FromQuery] int page = 1,
+            [FromQuery] int limit = 10)
+        {
+            var result = await _transactionService.GetTransactions(page, limit, cancellationToken);
+            return result;
+        }
     }
 }

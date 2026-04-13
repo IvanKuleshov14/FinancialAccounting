@@ -1,4 +1,8 @@
-﻿namespace FinancialAccounting.Entities.Transactions;
+﻿using FinancialAccounting.Entities.Accounts;
+using FinancialAccounting.Entities.Categories;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace FinancialAccounting.Entities.Transactions;
 
 public class Transaction
 {
@@ -16,9 +20,13 @@ public class Transaction
 
     public Guid Id { get; set; }
 
+    public Account Account { get; set; } = null!;
+
     public Guid AccountId { get; set; }
 
     public TransactionTypes Type { get; set; }
+
+    public Category? Category { get; set; }
 
     public Guid? CategoryId { get; set; }
 
