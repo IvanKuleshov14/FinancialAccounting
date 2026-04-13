@@ -8,5 +8,6 @@ namespace FinancialAccounting.Application.Transactions
         Task AddTransferAsync(Transaction transactionExpense, Transaction transactionIncome, CancellationToken cancellationToken);
         Task DeleteAsync(Guid transactionId, CancellationToken cancellationToken);
         Task<List<Transaction>> GetTransactionsAsync(int page, int limit, CancellationToken cancellationToken);
+        Task<List<Transaction>> GetTransactionsByAccountIdAsync(Guid accountId, int page, int limit, CancellationToken cancellationToken);
     }
 }

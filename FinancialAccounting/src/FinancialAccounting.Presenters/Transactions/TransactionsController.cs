@@ -51,5 +51,17 @@ namespace FinancialAccounting.Presenters.Transactions
             var result = await _transactionService.GetTransactions(page, limit, cancellationToken);
             return result;
         }
+
+        [HttpGet("{accountId:guid}")]
+        public async Task<IEnumerable<GetTransactionListDto>> GetTransactionsByAccountId(
+            CancellationToken cancellationToken,
+            [FromRoute] Guid accountId,
+            [FromQuery] int page = 1,
+            [FromQuery] int limit = 10
+            )
+        {
+            var result = await _transactionService.GetTransactionsByAccountId(accountId, page, limit, cancellationToken);
+            return result;
+        }
     }
 }
