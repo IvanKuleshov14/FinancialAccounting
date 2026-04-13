@@ -75,8 +75,8 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Repositories
         public async Task<List<TargetTransaction>> GetTargetTransactionByTargetIdAsync(Guid targetId, int page, int limit, CancellationToken cancellationToken)
         {
             return await _dbContext.TargetTransactions.
-                Include(t => t.Target).
                 Where(t => t.TargetId == targetId).
+                Include(t => t.Target).
                 OrderByDescending(t => t.CreatedTime).
                 Skip((page - 1) * limit).
                 Take(limit).

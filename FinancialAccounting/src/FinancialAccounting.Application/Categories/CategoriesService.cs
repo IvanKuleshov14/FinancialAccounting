@@ -57,5 +57,16 @@ namespace FinancialAccounting.Application.Categories
         {
             await _categoriesRepository.DeleteAsync(categoryId, cancellationToken);
         }
+
+        public async Task<List<GetCategoryListDto>> GetCategoriesByType(CategoryTypes type, CancellationToken cancellationToken)
+        {
+            var categories = await _categoriesRepository.GetCategoriesByTypeAsync(type, cancellationToken);
+
+            return categories.Select(category => new GetCategoryListDto(
+                category.Id,
+                category.Name,
+                (int)category.Type
+                )).ToList();
+        }
     }
 }

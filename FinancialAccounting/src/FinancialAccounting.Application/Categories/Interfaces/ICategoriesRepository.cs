@@ -1,4 +1,5 @@
 ﻿using FinancialAccounting.Entities.Categories;
+using FinancialAccouting.Contracts.Categories;
 
 namespace FinancialAccounting.Application.Categories.Interfaces
 {
@@ -7,5 +8,6 @@ namespace FinancialAccounting.Application.Categories.Interfaces
         Task AddAsync(Category category, CancellationToken cancellationToken);
         Task UpdateAsync(Guid categoryId, string categoryName, CancellationToken cancellationToken);
         Task DeleteAsync(Guid categoryId, CancellationToken cancellationToken);
+        Task<List<Category>> GetCategoriesByTypeAsync(CategoryTypes type, CancellationToken cancellationToken);
     }
 }
