@@ -1,4 +1,6 @@
-﻿namespace FinancialAccounting.Entities.TargetTransactions
+﻿using FinancialAccounting.Entities.Targets;
+
+namespace FinancialAccounting.Entities.TargetTransactions
 {
     public class TargetTransaction
     {
@@ -13,6 +15,8 @@
         }
 
         public Guid Id { get; set; }
+
+        public Target Target {  get; set; }
 
         public Guid TargetId { get; set; }
 

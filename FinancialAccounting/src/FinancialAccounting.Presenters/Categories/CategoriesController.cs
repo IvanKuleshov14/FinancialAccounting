@@ -44,5 +44,15 @@ namespace FinancialAccounting.Presenters.Categories
             await _categoryService.Delete(categoryId, cancellationToken);
             return Ok("Category deleted");
         }
+
+        [HttpGet]
+        public async Task<IEnumerable<GetCategoryListDto>> GetCategoriesByType(
+            CancellationToken cancellationToken,
+            [FromQuery] CategoryTypes type
+            )
+        {
+            var result = await _categoryService.GetCategoriesByType(type, cancellationToken);
+            return result;
+        }
     }
 }

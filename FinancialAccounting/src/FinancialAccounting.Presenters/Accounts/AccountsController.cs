@@ -1,6 +1,8 @@
 ﻿using FinancialAccounting.Application;
 using FinancialAccouting.Contracts;
+using FinancialAccouting.Contracts.Accounts;
 using Microsoft.AspNetCore.Mvc;
+using System.Reflection.Metadata.Ecma335;
 
 namespace FinancialAccounting.Presenters
 {
@@ -49,7 +51,22 @@ namespace FinancialAccounting.Presenters
             [FromRoute] Guid accountId,
             CancellationToken cancellationToken)
         {
-            return Ok("Account geted");
+            var result = await _accountService.GetAccount(accountId, cancellationToken);
+
+            if(result == null)
+            {
+                return NotFound("Счет не найден");
+            }
+
+            return Ok(result);
+        }
+
+        [HttpGet]
+        public async Task<IEnumerable<GetAccountDto>> GetAllAccounts(
+            CancellationToken cancellationToken)
+        {
+            var result = await _accountService.GetAllAccounts(cancellationToken);
+            return result;
         }
 
         [HttpPost("{accountId:guid}/account_targets")]

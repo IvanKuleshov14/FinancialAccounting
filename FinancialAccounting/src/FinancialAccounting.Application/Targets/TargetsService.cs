@@ -59,5 +59,23 @@ namespace FinancialAccounting.Application.Targets
         {
             await _targetsRepository.DeleteAsync(targetId, cancellationToken);
         }
+
+        public async Task<List<GetTargetDto>> GetAllTargets(CancellationToken cancellationToken)
+        {
+            var targets = await _targetsRepository.GetAllTargetsAsync(cancellationToken);
+
+            return targets.Select(target =>
+            {
+                decimal progress = Math.Round(target.Total / target.Goal * 100, 2);
+
+                return new GetTargetDto(
+                    target.Id,
+                    target.Name,
+                    target.Total,
+                    target.Goal,
+                    progress
+                    );
+            }).ToList();
+        }
     }
 }

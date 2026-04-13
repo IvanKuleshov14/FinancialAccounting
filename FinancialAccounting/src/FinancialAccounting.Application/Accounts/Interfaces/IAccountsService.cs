@@ -1,4 +1,5 @@
 ﻿using FinancialAccouting.Contracts;
+using FinancialAccouting.Contracts.Accounts;
 
 namespace FinancialAccounting.Application
 {
@@ -8,5 +9,7 @@ namespace FinancialAccounting.Application
         Task Update(Guid AccountId, UpdateAccountDto AccountDto, CancellationToken CancellationToken);
         Task Delete(Guid AccountId, CancellationToken cancellationToken);
         Task CreateTarget(Guid AccountId, CreateAccountTargetDto AccountTargetDto, CancellationToken CancellationToken);
+        Task<GetAccountDto?> GetAccount(Guid id, CancellationToken cancellationToken);
+        Task<List<GetAccountDto>> GetAllAccounts(CancellationToken cancellationToken);
     }
 }

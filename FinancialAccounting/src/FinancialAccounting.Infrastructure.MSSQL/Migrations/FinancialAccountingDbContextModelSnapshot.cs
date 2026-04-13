@@ -67,9 +67,6 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Migrations
                         .HasMaxLength(30)
                         .HasColumnType("nvarchar(30)");
 
-                    b.Property<decimal>("Total")
-                        .HasColumnType("decimal(18,2)");
-
                     b.HasKey("Id");
 
                     b.HasIndex("AccountId")
@@ -220,25 +217,31 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Migrations
 
             modelBuilder.Entity("FinancialAccounting.Entities.TargetTransactions.TargetTransaction", b =>
                 {
-                    b.HasOne("FinancialAccounting.Entities.Targets.Target", null)
+                    b.HasOne("FinancialAccounting.Entities.Targets.Target", "Target")
                         .WithMany()
                         .HasForeignKey("TargetId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Target");
                 });
 
             modelBuilder.Entity("FinancialAccounting.Entities.Transactions.Transaction", b =>
                 {
-                    b.HasOne("FinancialAccounting.Entities.Accounts.Account", null)
+                    b.HasOne("FinancialAccounting.Entities.Accounts.Account", "Account")
                         .WithMany()
                         .HasForeignKey("AccountId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("FinancialAccounting.Entities.Categories.Category", null)
+                    b.HasOne("FinancialAccounting.Entities.Categories.Category", "Category")
                         .WithMany()
                         .HasForeignKey("CategoryId")
                         .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Account");
+
+                    b.Navigation("Category");
                 });
 
             modelBuilder.Entity("FinancialAccounting.Entities.Accounts.Account", b =>

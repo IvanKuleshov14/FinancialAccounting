@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FinancialAccounting.Infrastructure.MSSQL.Migrations
 {
     [DbContext(typeof(FinancialAccountingDbContext))]
-    [Migration("20260407121649_AddUserIdColumn")]
-    partial class AddUserIdColumn
+    [Migration("20260413101233_Clean")]
+    partial class Clean
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -70,9 +70,6 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Migrations
                         .HasMaxLength(30)
                         .HasColumnType("nvarchar(30)");
 
-                    b.Property<decimal>("Total")
-                        .HasColumnType("decimal(18,2)");
-
                     b.HasKey("Id");
 
                     b.HasIndex("AccountId")
@@ -101,6 +98,41 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Categories");
+                });
+
+            modelBuilder.Entity("FinancialAccounting.Entities.TargetTransactions.TargetTransaction", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateOnly>("CreatedDay")
+                        .HasColumnType("date");
+
+                    b.Property<DateTime>("CreatedTime")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime2")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<Guid>("TargetId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("Value")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TargetId");
+
+                    b.ToTable("TargetTransactions");
                 });
 
             modelBuilder.Entity("FinancialAccounting.Entities.Targets.Target", b =>
@@ -153,7 +185,8 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Migrations
                         .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.Property<string>("Description")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<Guid?>("RelatedTransactionId")
                         .HasColumnType("uniqueidentifier");
@@ -185,18 +218,33 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Migrations
                     b.Navigation("Account");
                 });
 
+            modelBuilder.Entity("FinancialAccounting.Entities.TargetTransactions.TargetTransaction", b =>
+                {
+                    b.HasOne("FinancialAccounting.Entities.TargetTransactions.TargetTransaction", "Target")
+                        .WithMany()
+                        .HasForeignKey("TargetId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Target");
+                });
+
             modelBuilder.Entity("FinancialAccounting.Entities.Transactions.Transaction", b =>
                 {
-                    b.HasOne("FinancialAccounting.Entities.Accounts.Account", null)
+                    b.HasOne("FinancialAccounting.Entities.Accounts.Account", "Account")
                         .WithMany()
                         .HasForeignKey("AccountId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("FinancialAccounting.Entities.Categories.Category", null)
+                    b.HasOne("FinancialAccounting.Entities.Categories.Category", "Category")
                         .WithMany()
                         .HasForeignKey("CategoryId")
                         .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Account");
+
+                    b.Navigation("Category");
                 });
 
             modelBuilder.Entity("FinancialAccounting.Entities.Accounts.Account", b =>

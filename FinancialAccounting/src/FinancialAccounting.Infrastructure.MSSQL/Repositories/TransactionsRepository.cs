@@ -164,5 +164,30 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Repositories
 
             await _dbContext.SaveChangesAsync();
         }
+
+        public async Task<List<Transaction>> GetTransactionsAsync(int page, int limit, CancellationToken cancellationToken)
+        {
+            return await _dbContext.Transactions.
+                Include(t => t.Account).
+                Include(t => t.Category).
+                OrderByDescending(t => t.CreatedTime).
+                Skip((page - 1) * limit).
+                Take(limit).
+                AsNoTracking().
+                ToListAsync();
+        }
+
+        public async Task<List<Transaction>> GetTransactionsByAccountIdAsync(Guid accountId, int page, int limit, CancellationToken cancellationToken)
+        {
+            return await _dbContext.Transactions.
+                Where(t => t.AccountId == accountId).
+                Include(t => t.Account).
+                Include(t => t.Category).
+                OrderByDescending(t => t.CreatedTime).
+                Skip((page - 1) * limit).
+                Take(limit).
+                AsNoTracking().
+                ToListAsync();
+        }
     }
 }

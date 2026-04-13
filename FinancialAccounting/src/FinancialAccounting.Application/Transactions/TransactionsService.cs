@@ -84,5 +84,37 @@ namespace FinancialAccounting.Application.Transactions
         {
             await _transactionsRepository.DeleteAsync(transactionId, cancellationToken);
         }
+
+        public async Task<List<GetTransactionListDto>> GetTransactions(int page, int limit, CancellationToken cancellationToken)
+        {
+            var transactions = await _transactionsRepository.GetTransactionsAsync(page, limit, cancellationToken);
+
+            return transactions.Select(transaction => new GetTransactionListDto(
+                    transaction.Id,
+                    transaction.Account.Name,
+                    transaction.Value,
+                    (int)transaction.Type,
+                    transaction.Category?.Name,
+                    transaction.Description,
+                    transaction.CreatedDay,
+                    transaction.CreatedTime
+                    )).ToList();
+        }
+
+        public async Task<List<GetTransactionListDto>> GetTransactionsByAccountId(Guid accountId, int page, int limit, CancellationToken cancellationToken)
+        {
+            var transactions = await _transactionsRepository.GetTransactionsByAccountIdAsync(accountId, page, limit, cancellationToken);
+
+            return transactions.Select(transaction => new GetTransactionListDto(
+                    transaction.Id,
+                    transaction.Account.Name,
+                    transaction.Value,
+                    (int)transaction.Type,
+                    transaction.Category?.Name,
+                    transaction.Description,
+                    transaction.CreatedDay,
+                    transaction.CreatedTime
+                    )).ToList();
+        }
     }
 }

@@ -1,6 +1,8 @@
 ﻿using FinancialAccounting.Application.Categories.Interfaces;
 using FinancialAccounting.Entities.Categories;
 using FinancialAccounting.Infrastructure.MSSQL.Data;
+using FinancialAccouting.Contracts.Categories;
+using Microsoft.EntityFrameworkCore;
 
 namespace FinancialAccounting.Infrastructure.MSSQL.Repositories
 {
@@ -41,6 +43,14 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Repositories
 
             category.IsDeleted = true;
             await _dbContext.SaveChangesAsync();
+        }
+
+        public async Task<List<Category>> GetCategoriesByTypeAsync(CategoryTypes type, CancellationToken cancellationToken)
+        {
+            return await _dbContext.Categories.
+                Where(c => c.Type == type).
+                AsNoTracking().
+                ToListAsync();
         }
     }
 }

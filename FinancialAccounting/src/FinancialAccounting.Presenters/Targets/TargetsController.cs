@@ -1,4 +1,5 @@
 ﻿using FinancialAccounting.Application.Targets.Interfaces;
+using FinancialAccounting.Entities.Targets;
 using FinancialAccouting.Contracts.Targets;
 using Microsoft.AspNetCore.Mvc;
 
@@ -43,6 +44,15 @@ namespace FinancialAccounting.Presenters.Targets
         {
             await _targetsService.Delete(targetId, cancellationToken);
             return Ok("Target deleted");
+        }
+
+        [HttpGet]
+        public async Task<IEnumerable<GetTargetDto>> GetAllTargets(
+            CancellationToken cancellationToken
+            )
+        {
+            var result = await _targetsService.GetAllTargets(cancellationToken);
+            return result;
         }
     }
 }

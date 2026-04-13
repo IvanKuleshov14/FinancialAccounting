@@ -20,12 +20,6 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Configurations
             builder.
                 Property(c => c.Type).
                 HasConversion<int>();
-
-            builder.
-                HasMany<Transaction>().
-                WithOne().
-                HasForeignKey(t => t.CategoryId).
-                OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

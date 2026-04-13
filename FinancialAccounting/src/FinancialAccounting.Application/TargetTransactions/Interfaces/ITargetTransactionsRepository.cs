@@ -6,5 +6,6 @@ namespace FinancialAccounting.Application.TargetTransactions.Interfaces
     {
         Task AddAsync(TargetTransaction targetTransaction, CancellationToken cancellationToken);
         Task DeleteAsync(Guid targetTransactionId, CancellationToken cancellationToken);
+        Task<List<TargetTransaction>> GetTargetTransactionByTargetIdAsync(Guid targetId, int page, int limiint, CancellationToken cancellationToken);
     }
 }

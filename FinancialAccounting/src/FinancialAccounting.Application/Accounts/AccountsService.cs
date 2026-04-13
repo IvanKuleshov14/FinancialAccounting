@@ -1,6 +1,7 @@
 ﻿using FinancialAccounting.Application.Accounts;
 using FinancialAccounting.Entities.Accounts;
 using FinancialAccouting.Contracts;
+using FinancialAccouting.Contracts.Accounts;
 using FluentValidation;
 
 namespace FinancialAccounting.Application
@@ -82,6 +83,53 @@ namespace FinancialAccounting.Application
                 );
 
             await _accountsRepository.AddTargetAsync(accountTarget, cancellationToken);
+        }
+
+        public async Task<GetAccountDto?> GetAccount(Guid id, CancellationToken cancellationToken)
+        {
+            var account = await _accountsRepository.GetAccountByIdAsync(id, cancellationToken);
+            if (account == null)
+            {
+                return null;
+            }
+
+            decimal? progress = null;
+            if (account.Target != null)
+            {
+                progress = Math.Round(account.Total / account.Target.Goal * 100, 2);
+            }
+
+            return new GetAccountDto(
+                account.Id,
+                account.Name,
+                account.Total,
+                account.Target?.Name,
+                account.Target?.Goal,
+                progress
+                );
+        }
+
+        public async Task<List<GetAccountDto>> GetAllAccounts(CancellationToken cancellationToken)
+        {
+            var accounts = await _accountsRepository.GetAllAccountsAsync(cancellationToken);
+
+            return accounts.Select(account =>
+            {
+                decimal? progress = null;
+                if (account.Target != null)
+                {
+                    progress = Math.Round(account.Total / account.Target.Goal * 100, 2);
+                }
+
+                return new GetAccountDto(
+                    account.Id,
+                    account.Name,
+                    account.Total,
+                    account.Target?.Name,
+                    account.Target?.Goal,
+                    progress
+                    );
+            }).ToList();
         }
     }
 }

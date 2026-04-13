@@ -7,5 +7,6 @@ namespace FinancialAccounting.Application.Targets.Interfaces
         Task Create(CreateTargetDto targetDto, CancellationToken cancellationToken);
         Task Update(Guid targetId, UpdateTargetDto updateTargetDto, CancellationToken cancellationToken);
         Task Delete(Guid targetId, CancellationToken cancellationToken);
+        Task<List<GetTargetDto>> GetAllTargets(CancellationToken cancellationToken);
     }
 }

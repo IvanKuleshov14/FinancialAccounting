@@ -13,11 +13,11 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Configurations
                 HasKey(t => t.Id);
 
             builder.
-                HasOne<Target>().
+                HasOne(t => t.Target).
                 WithMany().
                 HasForeignKey(t => t.TargetId).
                 IsRequired().
-                OnDelete(DeleteBehavior.Cascade);
+                OnDelete(DeleteBehavior.Restrict);
 
             builder.
                 Property(t => t.Value).
@@ -27,10 +27,6 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Configurations
             builder.
                 Property(t => t.CreatedTime).
                 HasDefaultValueSql("CURRENT_TIMESTAMP");
-
-            //builder.
-            //    Property(t => t.CreatedDay).
-            //    IsRequired();
 
             builder.
                 Property(t => t.Type).
