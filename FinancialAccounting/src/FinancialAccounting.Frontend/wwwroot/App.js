@@ -2,17 +2,35 @@
 
 // Загрузка счетов в сайдбар
 async function loadAccounts() {
-    const res = await fetch(`${API_URL}/accounts`);
+    const res = await fetch(`${API_URL}/Accounts`);
     const data = await res.json();
     const list = document.getElementById('accounts-list');
-    list.innerHTML = data.map(acc => `
+
+    list.innerHTML = data.map(acc => {
+        // Используем TargetProgress напрямую из твоего DTO
+        const progressValue = acc.targetProgress || 0;
+        const barWidth = Math.min(progressValue, 100); // Чтобы бар не улетел за 100%
+
+        return `
         <div class="card" onclick="showAccount('${acc.id}', '${acc.name}')">
             <div class="card-header">
                 <span>${acc.name}</span>
                 <span class="balance">${acc.total.toLocaleString()} ₽</span>
             </div>
+            
+            <!-- Если есть имя цели, рисуем БАР -->
+            ${acc.targetName ? `
+                <div class="progress-container">
+                    <div class="progress-bar" style="width: ${barWidth}%"></div>
+                </div>
+                <div class="target-info">
+                    <span style="font-size: 0.75rem; color: #0084ff; font-weight: 500;">🎯 ${acc.targetName}</span>
+                    <span style="font-size: 0.75rem; font-weight: bold;">${Math.round(progressValue)}%</span>
+                </div>
+            ` : ''}
         </div>
-    `).join('');
+        `;
+    }).join('');
 }
 
 // Показ истории транзакций
@@ -23,17 +41,17 @@ async function showAccount(id, name) {
         <div id="account-title-container">
             <h1 style="display:inline-block;">${name}</h1>
             <button class="btn-edit" onclick="enableEditAccount('${id}', '${name}')">✎</button>
+            <div id="account-target-badge"></div> <!-- Место для названия цели -->
         </div>
-        <div style="display:flex; gap:10px; align-items: center;">
+        <div style="display:flex; gap:10px;">
+            <button class="btn-submit" style="background:#6c757d; width:auto; padding:10px 20px;" onclick="showAccountTargetForm('${id}', '${name}')">🎯 Цель</button>
             <button class="btn-submit" style="background:#6c757d; width:auto; padding:10px 20px;" onclick="showTransferForm('${id}', '${name}')">⇄ Перевод</button>
             <button class="btn-submit" style="width:auto; padding:10px 20px;" onclick="showForm('${id}', '${name}')">+ Операция</button>
-            
-            <!-- ТРИ ТОЧКИ -->
             <div class="dropdown">
-                <button class="btn-more" onclick="toggleAccountMenu()">⋮</button>
-                <div id="account-dropdown" class="dropdown-content">
+                 <button class="btn-more" onclick="toggleAccountMenu()">⋮</button>
+                 <div id="account-dropdown" class="dropdown-content">
                     <button onclick="deleteAccount('${id}')">🗑 Удалить счет</button>
-                </div>
+                 </div>
             </div>
         </div>
     </div>
@@ -362,7 +380,7 @@ function showCreateAccountForm() {
     `;
 }
 
-// Отправка данных на бэкенд
+// Сохранение счета
 async function submitCreateAccount() {
     const nameInput = document.getElementById('new-acc-name');
     const totalInput = document.getElementById('new-acc-total');
@@ -401,6 +419,134 @@ async function submitCreateAccount() {
     } catch (e) {
         console.error(e);
         await loadAccounts();
+    }
+}
+
+// Форма для создания привязанной цели
+async function showAccountTargetForm(accountId, accountName) {
+    const area = document.getElementById('details-area');
+    area.innerHTML = '<div class="text-center mt-5">Загрузка данных цели...</div>';
+
+    try {
+        const res = await fetch(`${API_URL}/Accounts/${accountId}`);
+        const acc = await res.json();
+
+        // Если TargetName пустой — рисуем форму СОЗДАНИЯ
+        if (!acc.targetName) {
+            renderCreateTargetForm(accountId, accountName);
+        } else {
+            // Если цель есть — рисуем ДЕТАЛИЗАЦИЮ
+            renderTargetDetailsCard(acc);
+        }
+    } catch (e) {
+        console.error(e);
+        area.innerHTML = "Ошибка загрузки цели";
+    }
+}
+
+// Вспомогательная функция: Форма создания
+function renderCreateTargetForm(accountId, accountName) {
+    const area = document.getElementById('details-area');
+    area.innerHTML = `
+        <div class="form-card">
+            <h2 style="text-align:center; margin-bottom:20px;">Установить цель</h2>
+            <p style="text-align:center; color:#888;">Для счета: ${accountName}</p>
+            <input type="text" id="target-name" placeholder="Название (напр. На отпуск)">
+            <input type="number" id="target-goal" placeholder="Сумма цели (₽)">
+            <button class="btn-submit" onclick="submitAccountTarget('${accountId}', '${accountName}')">Создать</button>
+            <button class="btn-submit" style="background:none; color:#888;" onclick="showAccount('${accountId}', '${accountName}')">Назад</button>
+        </div>
+    `;
+}
+
+// Вспомогательная функция: Карточка деталей
+function renderTargetDetailsCard(acc) {
+    const area = document.getElementById('details-area');
+    const percent = Math.min(Math.round(acc.targetProgress || 0), 100);
+
+    area.innerHTML = `
+        <div class="form-card" style="border-left: 5px solid #0084ff;">
+            <h2 style="margin-bottom:10px;">🎯 ${acc.targetName}</h2>
+            <div style="font-size: 1.1rem; margin-bottom: 20px; color: #65676b;">
+                Привязана к счету: <strong>${acc.name}</strong>
+            </div>
+
+            <div class="progress-container" style="height: 15px; margin-bottom: 10px;">
+                <div class="progress-bar" style="width: ${percent}%"></div>
+            </div>
+            
+            <div style="display:flex; justify-content:space-between; margin-bottom:30px;">
+                <span style="font-weight:bold; font-size: 1.2rem;">${percent}%</span>
+                <span>Накоплено: <strong>${acc.total.toLocaleString()} ₽</strong> из ${acc.targetGoal?.toLocaleString()} ₽</span>
+            </div>
+
+            <div style="display:flex; gap:10px;">
+                <!-- Передаем AccountTargetId для удаления -->
+                <button class="btn-submit" style="background:#dc3545;" 
+                    onclick="deleteAccountTarget('${acc.accountTargetId}', '${acc.id}', '${acc.name}')">
+                    Удалить цель
+                </button>
+                <button class="btn-submit" style="background:#6c757d;" 
+                    onclick="showAccount('${acc.id}', '${acc.name}')">
+                    Назад
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+// Сохранение привязанной цели
+async function submitAccountTarget(accountId, accountName) {
+    const name = document.getElementById('target-name').value;
+    const goal = document.getElementById('target-goal').value;
+
+    if (!name || !goal) return alert("Заполните все поля");
+
+    const payload = {
+        name: name,
+        goal: parseFloat(goal)
+    };
+
+    try {
+        const res = await fetch(`${API_URL}/Accounts/${accountId}/account_targets`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+            await loadAccounts(); // Обновит прогресс-бар в сайдбаре
+            showAccount(accountId, accountName);
+        } else {
+            alert("Ошибка при установке цели");
+        }
+    } catch (e) {
+        console.error(e);
+        await loadAccounts();
+        showAccount(accountId, accountName);
+    }
+}
+
+// Удаление привязанной цели
+async function deleteAccountTarget(targetId, accountId, accountName) {
+    if (!confirm("Удалить цель? Прогресс будет скрыт, но баланс счета не изменится.")) return;
+
+    try {
+        const res = await fetch(`${API_URL}/AccountTargets/${targetId}`, {
+            method: 'DELETE'
+        });
+
+        if (res.ok) {
+            await loadAccounts(); // Чтобы убрать бар из сайдбара
+            showAccount(accountId, accountName); // Возвращаемся в детали счета
+        } else {
+            alert("Ошибка при удалении цели с сервера");
+        }
+    } catch (e) {
+        console.error(e);
+        // Fallback для CORS
+        await loadAccounts();
+        showAccount(accountId, accountName);
     }
 }
 // Запуск
