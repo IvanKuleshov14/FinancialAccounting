@@ -5,13 +5,13 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddCors();
+
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddApplication();
 builder.Services.AddInsfrasturcture();
-
-builder.Services.AddCors();
 
 var connectionString = builder.Configuration.GetConnectionString("MsSqlServerConnectionString");
 builder.Services.AddDbContext<FinancialAccountingDbContext>(options => options.UseSqlServer(connectionString));
@@ -25,9 +25,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-//app.UseAuthorization();
-
+app.UseRouting();
 app.UseCors(policy => policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+app.UseAuthorization();
 
 app.MapControllers();
 

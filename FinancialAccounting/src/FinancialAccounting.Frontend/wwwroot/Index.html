@@ -1,1 +1,231 @@
-﻿
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Личные финансы</title>
+    <style>
+        /* БАЗОВЫЕ СБРОСЫ */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: #f0f2f5;
+            color: #1a1a1a;
+        }
+
+        .app-wrapper {
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* ЛЕВАЯ ПАНЕЛЬ (САЙДБАР) */
+        #sidebar {
+            width: 320px;
+            background: #fff;
+            border-right: 1px solid #e0e0e0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .section-title {
+            font-size: 0.9rem;
+            color: #65676b;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin: 20px 0 10px;
+        }
+
+        /* КАРТОЧКИ В САЙДБАРЕ */
+        .card {
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+            .card:hover {
+                border-color: #0084ff;
+                background: #f7faff;
+            }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+        }
+
+        .balance {
+            color: #0084ff;
+        }
+
+        /* ПРАВАЯ ЧАСТЬ */
+        #main-content {
+            flex-grow: 1;
+            padding: 40px;
+            overflow-y: auto;
+            display: flex;
+            justify-content: center;
+        }
+
+        #details-area {
+            width: 100%;
+            max-width: 600px;
+        }
+
+        /* ТРАНЗАКЦИИ */
+        .tr-item {
+            background: #fff;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #f0f2f5;
+        }
+
+        .tr-amount-pos {
+            color: #28a745;
+            font-weight: bold;
+        }
+
+        .tr-amount-neg {
+            color: #dc3545;
+            font-weight: bold;
+        }
+
+        /* ФОРМА */
+        .form-card {
+            background: #fff;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+        }
+
+        .type-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .type-btn {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #eee;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        input[type="radio"] {
+            display: none;
+        }
+
+        #type-exp:checked + label {
+            border-color: #dc3545;
+            color: #dc3545;
+            background: #fff5f5;
+        }
+
+        #type-inc:checked + label {
+            border-color: #28a745;
+            color: #28a745;
+            background: #f1fdf7;
+        }
+
+        input[type="number"], input[type="text"], select {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 15px;
+            background: #0084ff;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .btn-submit:hover {
+                background: #0073e6;
+        }
+
+        .tr-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .tr-desc {
+            font-size: 0.85rem;
+            color: #65676b;
+            font-style: italic;
+        }
+
+        .tr-item {
+            position: relative;
+        }
+
+
+        /* Чтобы кнопка позиционировалась внутри */
+
+        .btn-delete {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            color: #ccc;
+            cursor: pointer;
+            font-size: 1.2rem;
+            line-height: 1;
+            padding: 5px;
+            transition: 0.2s;
+        }
+
+            .btn-delete:hover {
+                color: #dc3545;
+                transform: scale(1.2);
+            }
+    </style>
+</head>
+<body>
+    <div class="app-wrapper">
+        <aside id="sidebar">
+            <h2 style="font-size: 1.2rem; margin-bottom: 20px;">Мои финансы</h2>
+            <div class="section-title">Счета</div>
+            <div id="accounts-list"></div>
+
+            <div class="section-title">Копилки</div>
+            <div id="targets-list"></div>
+        </aside>
+
+        <main id="main-content">
+            <div id="details-area">
+                <div style="text-align: center; color: #888; margin-top: 100px;">
+                    <h2>Добро пожаловать</h2>
+                    <p>Выберите счет слева, чтобы начать</p>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>
