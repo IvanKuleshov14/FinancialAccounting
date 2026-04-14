@@ -19,18 +19,26 @@ async function loadAccounts() {
 async function showAccount(id, name) {
     const area = document.getElementById('details-area');
     area.innerHTML = `
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
-            <div id="account-title-container">
-                <h1 style="display:inline-block;">${name}</h1>
-                <button class="btn-edit" onclick="enableEditAccount('${id}', '${name}')" title="Редактировать">✎</button>
-            </div>
-            <div style="display:flex; gap:10px;">
-                <button class="btn-submit" style="background:#6c757d; width:auto; padding:10px 20px;" onclick="showTransferForm('${id}', '${name}')">⇄ Перевод</button>
-                <button class="btn-submit" style="width:auto; padding:10px 20px;" onclick="showForm('${id}', '${name}')">+ Операция</button>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
+        <div id="account-title-container">
+            <h1 style="display:inline-block;">${name}</h1>
+            <button class="btn-edit" onclick="enableEditAccount('${id}', '${name}')">✎</button>
+        </div>
+        <div style="display:flex; gap:10px; align-items: center;">
+            <button class="btn-submit" style="background:#6c757d; width:auto; padding:10px 20px;" onclick="showTransferForm('${id}', '${name}')">⇄ Перевод</button>
+            <button class="btn-submit" style="width:auto; padding:10px 20px;" onclick="showForm('${id}', '${name}')">+ Операция</button>
+            
+            <!-- ТРИ ТОЧКИ -->
+            <div class="dropdown">
+                <button class="btn-more" onclick="toggleAccountMenu()">⋮</button>
+                <div id="account-dropdown" class="dropdown-content">
+                    <button onclick="deleteAccount('${id}')">🗑 Удалить счет</button>
+                </div>
             </div>
         </div>
-        <div id="transactions-list">Загрузка...</div>
-    `;
+    </div>
+    <div id="transactions-list">Загрузка...</div>
+`;
 
     const res = await fetch(`${API_URL}/transactions/${id}?page=1&limit=20`);
     const txs = await res.json();
@@ -287,6 +295,51 @@ async function saveAccountName(id) {
         // Обработка CORS если нужно
         await loadAccounts();
         showAccount(id, newName);
+    }
+}
+
+// Переключение видимости меню
+function toggleAccountMenu() {
+    document.getElementById("account-dropdown").classList.toggle("show");
+}
+
+// Закрытие меню при клике в любом другом месте
+window.onclick = function (event) {
+    if (!event.target.matches('.btn-more')) {
+        const dropdowns = document.getElementsByClassName("dropdown-content");
+        for (let i = 0; i < dropdowns.length; i++) {
+            let openDropdown = dropdowns[i];
+            if (openDropdown.classList.contains('show')) {
+                openDropdown.classList.remove('show');
+            }
+        }
+    }
+}
+
+// Функция удаления счета
+async function deleteAccount(id) {
+    if (!confirm("Вы уверены, что хотите удалить этот счет со всеми транзакциями? Это действие нельзя отменить.")) return;
+
+    try {
+        const res = await fetch(`${API_URL}/Accounts/${id}`, {
+            method: 'DELETE'
+        });
+
+        if (res.ok) {
+            await loadAccounts(); // Обновляем сайдбар
+            document.getElementById('details-area').innerHTML = `
+                <div style="text-align: center; color: #888; margin-top: 100px;">
+                    <h2>Счет удален</h2>
+                    <p>Выберите другой счет слева</p>
+                </div>`;
+        } else {
+            alert("Ошибка при удалении счета");
+        }
+    } catch (e) {
+        console.error(e);
+        await loadAccounts();
+        // Если перенаправление на главную после удаления
+        location.reload();
     }
 }
 
