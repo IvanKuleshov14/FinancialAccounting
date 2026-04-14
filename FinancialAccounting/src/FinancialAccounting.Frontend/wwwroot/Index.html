@@ -324,16 +324,51 @@
         .show {
             display: block;
         }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 20px 0 10px;
+        }
+
+        .btn-add-section {
+            background: #e7f3ff;
+            color: #0084ff;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
+        }
+
+            .btn-add-section:hover {
+                background: #0084ff;
+                color: white;
+            }
     </style>
 </head>
 <body>
     <div class="app-wrapper">
         <aside id="sidebar">
             <h2 style="font-size: 1.2rem; margin-bottom: 20px;">Мои финансы</h2>
-            <div class="section-title">Счета</div>
+
+            <div class="section-header">
+                <div class="section-title" style="margin:0;">Счета</div>
+                <button class="btn-add-section" onclick="showCreateAccountForm()" title="Добавить счет">+</button>
+            </div>
             <div id="accounts-list"></div>
 
-            <div class="section-title">Копилки</div>
+            <!-- Аналогично можно сделать для Копилок чуть позже -->
+            <div class="section-header">
+                <div class="section-title" style="margin:0;">Копилки</div>
+                <button class="btn-add-section" onclick="alert('Скоро!')">+</button>
+            </div>
             <div id="targets-list"></div>
         </aside>
 

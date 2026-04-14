@@ -343,5 +343,65 @@ async function deleteAccount(id) {
     }
 }
 
+// Показать форму создания счета
+function showCreateAccountForm() {
+    const area = document.getElementById('details-area');
+    area.innerHTML = `
+        <div class="form-card">
+            <h2 style="text-align:center; margin-bottom:20px;">Новый счет</h2>
+            
+            <label class="section-title">Название счета:</label>
+            <input type="text" id="new-acc-name" placeholder="Например: Наличные или Карта" autofocus>
+
+            <label class="section-title">Начальный баланс (₽):</label>
+            <input type="number" id="new-acc-total" value="0" step="0.01">
+
+            <button class="btn-submit" onclick="submitCreateAccount()">Создать счет</button>
+            <button onclick="location.reload()" style="background:none; border:none; color:#888; width:100%; margin-top:10px; cursor:pointer;">Отмена</button>
+        </div>
+    `;
+}
+
+// Отправка данных на бэкенд
+async function submitCreateAccount() {
+    const nameInput = document.getElementById('new-acc-name');
+    const totalInput = document.getElementById('new-acc-total');
+
+    if (!nameInput.value.trim()) return alert("Введите название");
+
+    const payload = {
+        name: nameInput.value.trim(),
+        // Используем случайный валидный GUID вместо нулей
+        userId: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+        total: parseFloat(totalInput.value) || 0
+    };
+
+    try {
+        const res = await fetch(`${API_URL}/Accounts`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+            // Если твой контроллер возвращает Created/Ok с объектом
+            try {
+                const createdAccount = await res.json();
+                await loadAccounts();
+                showAccount(createdAccount.id, createdAccount.name);
+            } catch {
+                // Если контроллер вернул успех, но без тела (пустой Ok)
+                await loadAccounts();
+                document.getElementById('details-area').innerHTML = "<h2>Счет создан</h2>";
+            }
+        } else {
+            const err = await res.text();
+            alert("Сервер не принял UserId: " + err);
+        }
+    } catch (e) {
+        console.error(e);
+        await loadAccounts();
+    }
+}
 // Запуск
 loadAccounts();
