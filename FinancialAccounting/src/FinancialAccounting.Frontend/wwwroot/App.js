@@ -20,7 +20,10 @@ async function showAccount(id, name) {
     const area = document.getElementById('details-area');
     area.innerHTML = `
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
-            <h1>${name}</h1>
+            <div id="account-title-container">
+                <h1 style="display:inline-block;">${name}</h1>
+                <button class="btn-edit" onclick="enableEditAccount('${id}', '${name}')" title="Редактировать">✎</button>
+            </div>
             <button class="btn-submit" style="width:auto; padding:10px 20px;" onclick="showForm('${id}')">+ Операция</button>
         </div>
         <div id="transactions-list">Загрузка...</div>
@@ -119,6 +122,7 @@ async function saveTransaction(accountId, accountName) { // Добавили acc
     }
 }
 
+// Удаление транзакции
 async function deleteTransaction(transactionId, accountId, accountName) {
     if (!confirm("Удалить эту операцию?")) return;
 
@@ -140,6 +144,60 @@ async function deleteTransaction(transactionId, accountId, accountName) {
         console.error(e);
         await loadAccounts();
         showAccount(accountId, accountName);
+    }
+}
+
+function enableEditAccount(id, oldName) {
+    const container = document.getElementById('account-title-container');
+
+    container.innerHTML = `
+        <input type="text" id="edit-acc-name" class="edit-input" value="${oldName}" 
+               onkeydown="if(event.key==='Enter') saveAccountName('${id}')">
+        
+        <div class="edit-group">
+            <button class="btn-edit" id="btn-save-name" style="color: #28a745; font-size: 1.5rem; margin:0;">✔</button>
+            <button class="btn-edit" id="btn-cancel-name" style="color: #888; font-size: 1.5rem; margin:0;">✖</button>
+        </div>
+    `;
+
+    document.getElementById('btn-save-name').onclick = (e) => {
+        e.stopPropagation(); // На всякий случай прерываем всплытие
+        saveAccountName(id);
+    };
+
+    document.getElementById('btn-cancel-name').onclick = (e) => {
+        e.stopPropagation();
+        showAccount(id, oldName);
+    };
+
+    const input = document.getElementById('edit-acc-name');
+    input.focus();
+    input.select();
+}
+
+//Редактирование названия счета
+async function saveAccountName(id) {
+    const newName = document.getElementById('edit-acc-name').value;
+    if (!newName) return;
+
+    try {
+        const res = await fetch(`${API_URL}/accounts/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: newName }) // Твой UpdateAccountDto
+        });
+
+        if (res.ok) {
+            await loadAccounts(); // Обновляем сайдбар
+            showAccount(id, newName); // Обновляем заголовок
+        } else {
+            alert("Ошибка при обновлении имени");
+        }
+    } catch (e) {
+        console.error(e);
+        // Обработка CORS если нужно
+        await loadAccounts();
+        showAccount(id, newName);
     }
 }
 
