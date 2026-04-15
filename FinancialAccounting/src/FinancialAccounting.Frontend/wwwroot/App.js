@@ -127,19 +127,31 @@ async function showForm(accountId, accountName) {
             
             <label class="section-title">Категория:</label>
 <div class="input-row" style="display: flex; gap: 8px; align-items: center;">
+    <!-- Выпадающий список забирает всё свободное место -->
     <select id="category-select" style="flex-grow: 1; height: 45px; margin: 0;">
         <!-- Загрузится динамически -->
     </select>
 
-    <!-- Кнопка УДАЛЕНИЯ выбранной категории -->
-    <button type="button" class="btn-inline-del"
-            onclick="deleteCurrentCategory('${accountId}', '${accountName}')" 
-            title="Удалить выбранную категорию">🗑</button>
+    <!-- Кнопка РЕДАКТИРОВАНИЯ (с отступом справа) -->
+    <button type="button" class="btn-inline-add"
+            onclick="showEditCategoryForm('${accountId}', '${accountName}')" 
+            style="
+                background: #f0f2f5; 
+                color: #65676b; 
+                border: 1px solid #ddd; 
+                margin-right: 12px !important; /* ОТСТУП ЗДЕСЬ */
+                width: 45px; height: 45px; flex-shrink: 0;
+            " title="Редактировать категорию">✎</button>
 
-    <!-- Кнопка ДОБАВЛЕНИЯ новой -->
+    <!-- Кнопка ДОБАВЛЕНИЯ новой (стоит чуть поодаль) -->
     <button type="button" class="btn-inline-add" 
             onclick="showCreateCategoryForm('${accountId}', '${accountName}')" 
-            style="background: #0084ff; color: white; border: none; border-radius: 8px; width: 45px; height: 45px; font-size: 1.5rem;">+</button>
+            style="
+                background: #0084ff; 
+                color: white; 
+                border: none; 
+                width: 45px; height: 45px; flex-shrink: 0;
+            ">+</button>
 </div>
 
             <label class="section-title">Комментарий:</label>
@@ -750,6 +762,67 @@ async function submitUpdateTarget(targetId, accountId, accountName) {
         await loadAccounts();
         showAccount(accountId, accountName);
     }
+}
+
+function showEditCategoryForm(accountId, accountName) {
+    const select = document.getElementById('category-select');
+    const categoryId = select.value;
+    const categoryName = select.options[select.selectedIndex]?.text;
+
+    if (!categoryId || categoryId === "") return alert("Выберите категорию");
+
+    const area = document.getElementById('details-area');
+    area.innerHTML = `
+        <div class="form-card" style="position: relative;">
+            <h2 style="text-align:center; margin-bottom:20px;">Редактировать категорию</h2>
+            
+            <label class="section-title">Название категории:</label>
+            <input type="text" id="edit-cat-name" value="${categoryName}" autofocus>
+
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn-submit" onclick="submitUpdateCategory('${categoryId}', '${accountId}', '${accountName}')">Сохранить</button>
+                
+                <!-- Кнопка удаления внутри формы -->
+                <button class="btn-submit" style="background: #fff5f5; color: #dc3545; border: 1px solid #ffc1c1; width: 60px;" 
+                        onclick="deleteCurrentCategoryConfirm('${categoryId}', '${accountId}', '${accountName}')" title="Удалить">🗑</button>
+            </div>
+
+            <button onclick="showForm('${accountId}', '${accountName}')" style="background:none; border:none; color:#888; width:100%; margin-top:15px; cursor:pointer;">Отмена</button>
+        </div>
+    `;
+}
+
+// 1. Метод PUT для изменения имени
+async function submitUpdateCategory(categoryId, accountId, accountName) {
+    const newName = document.getElementById('edit-cat-name').value;
+    if (!newName) return alert("Введите название");
+
+    try {
+        const res = await fetch(`${API_URL}/Categories/${categoryId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: newName }) // Твой UpdateCategoryDto
+        });
+
+        if (res.ok) {
+            showForm(accountId, accountName);
+        }
+    } catch (e) { console.error(e); showForm(accountId, accountName); }
+}
+
+// 2. Метод DELETE для Soft Delete
+async function deleteCurrentCategoryConfirm(categoryId, accountId, accountName) {
+    if (!confirm("Скрыть эту категорию из списка?")) return;
+
+    try {
+        const res = await fetch(`${API_URL}/Categories/${categoryId}`, {
+            method: 'DELETE'
+        });
+
+        if (res.ok) {
+            showForm(accountId, accountName);
+        }
+    } catch (e) { console.error(e); showForm(accountId, accountName); }
 }
 
 // Запуск
