@@ -10,7 +10,8 @@ namespace FinancialAccouting.Contracts.Transactions
         string? CategoryName,
         string? Description,
         DateOnly CreatedDay,
-        DateTime CreatedTime
+        DateTime CreatedTime,
+        Guid? RelatedTransactionId
         )
     { }
 }

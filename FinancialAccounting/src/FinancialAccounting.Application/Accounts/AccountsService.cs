@@ -105,7 +105,8 @@ namespace FinancialAccounting.Application
                 account.Total,
                 account.Target?.Name,
                 account.Target?.Goal,
-                progress
+                progress,
+                account.Target?.Id
                 );
         }
 
@@ -127,7 +128,8 @@ namespace FinancialAccounting.Application
                     account.Total,
                     account.Target?.Name,
                     account.Target?.Goal,
-                    progress
+                    progress,
+                    account.Target?.Id
                     );
             }).ToList();
         }

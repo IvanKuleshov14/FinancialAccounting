@@ -6,6 +6,7 @@
         decimal Total,
         string? TargetName,
         decimal? TargetGoal,
-        decimal? TargetProgress
+        decimal? TargetProgress,
+        Guid? AccountTargetId
         ) {}
 }

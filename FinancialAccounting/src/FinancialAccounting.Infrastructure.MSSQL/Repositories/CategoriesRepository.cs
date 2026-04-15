@@ -48,7 +48,7 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Repositories
         public async Task<List<Category>> GetCategoriesByTypeAsync(CategoryTypes type, CancellationToken cancellationToken)
         {
             return await _dbContext.Categories.
-                Where(c => c.Type == type).
+                Where(c => c.Type == type && c.IsDeleted == false).
                 AsNoTracking().
                 ToListAsync();
         }

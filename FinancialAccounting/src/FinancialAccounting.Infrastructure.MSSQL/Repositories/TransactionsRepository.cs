@@ -2,6 +2,7 @@
 using FinancialAccounting.Entities.Transactions;
 using FinancialAccounting.Infrastructure.MSSQL.Data;
 using Microsoft.EntityFrameworkCore;
+using System.Text;
 
 namespace FinancialAccounting.Infrastructure.MSSQL.Repositories
 {

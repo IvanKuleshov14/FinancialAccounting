@@ -1,0 +1,530 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Личные финансы</title>
+    <style>
+        /* БАЗОВЫЕ СБРОСЫ */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: #f0f2f5;
+            color: #1a1a1a;
+        }
+
+        .app-wrapper {
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* ЛЕВАЯ ПАНЕЛЬ (САЙДБАР) */
+        #sidebar {
+            width: 320px;
+            background: #fff;
+            border-right: 1px solid #e0e0e0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .section-title {
+            font-size: 0.9rem;
+            color: #65676b;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin: 20px 0 10px;
+        }
+
+        /* КАРТОЧКИ В САЙДБАРЕ */
+        .card {
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+            .card:hover {
+                border-color: #0084ff;
+                background: #f7faff;
+            }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+        }
+
+        .balance {
+            color: #0084ff;
+        }
+
+        /* ПРАВАЯ ЧАСТЬ */
+        #main-content {
+            flex-grow: 1;
+            padding: 40px;
+            overflow-y: auto;
+            display: flex;
+            justify-content: center;
+        }
+
+        #details-area {
+            width: 100%;
+            max-width: 600px;
+        }
+
+        /* ТРАНЗАКЦИИ */
+        .tr-item {
+            background: #fff;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #f0f2f5;
+        }
+
+        .tr-amount-pos {
+            color: #28a745;
+            font-weight: bold;
+        }
+
+        .tr-amount-neg {
+            color: #dc3545;
+            font-weight: bold;
+        }
+
+        /* ФОРМА */
+        .form-card {
+            background: #fff;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+        }
+
+        .type-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .type-btn {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #eee;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        input[type="radio"] {
+            display: none;
+        }
+
+        #type-exp:checked + label {
+            border-color: #dc3545;
+            color: #dc3545;
+            background: #fff5f5;
+        }
+
+        #type-inc:checked + label {
+            border-color: #28a745;
+            color: #28a745;
+            background: #f1fdf7;
+        }
+
+        input[type="number"], input[type="text"], select {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 15px;
+            background: #0084ff;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .btn-submit:hover {
+                background: #0073e6;
+        }
+
+        .tr-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .tr-desc {
+            font-size: 0.85rem;
+            color: #65676b;
+            font-style: italic;
+        }
+
+        .tr-item {
+            position: relative;
+        }
+
+
+        /* Чтобы кнопка позиционировалась внутри */
+
+        .btn-delete {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            color: #ccc;
+            cursor: pointer;
+            font-size: 1.2rem;
+            line-height: 1;
+            padding: 5px;
+            transition: 0.2s;
+        }
+
+            .btn-delete:hover {
+                color: #dc3545;
+                transform: scale(1.2);
+            }
+
+        .btn-edit {
+            background: none;
+            border: none;
+            color: #0084ff;
+            cursor: pointer;
+            font-size: 1.2rem;
+            margin-left: 10px;
+            padding: 5px;
+            vertical-align: middle;
+            transition: 0.2s;
+        }
+
+            .btn-edit:hover {
+                color: #0056b3;
+                transform: scale(1.1);
+            }
+
+        /* Стиль для инпута редактирования прямо в заголовке */
+        .edit-input {
+            font-size: 2rem; /* Чтобы совпадало с h1 */
+            font-weight: bold;
+            border: 1px solid #0084ff;
+            border-radius: 8px;
+            padding: 2px 10px;
+            width: 400px;
+        }
+
+        #account-title-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-height: 60px;
+        }
+
+        .edit-group {
+            display: flex;
+            align-items: center;
+            gap: 8px; /* Расстояние между галочкой и крестиком */
+            height: 100%;
+        }
+
+        .btn-edit {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: none;
+            border: none;
+            padding: 0;
+            margin: 0;
+            cursor: pointer;
+            line-height: 1; /* Убираем лишнюю высоту строки */
+        }
+
+        .edit-input {
+            font-size: 2rem;
+            font-weight: bold;
+            border: 2px solid #0084ff;
+            border-radius: 8px;
+            padding: 4px 12px;
+            line-height: 1.2; /* Чтобы текст внутри был по центру */
+            outline: none;
+        }
+
+        /* Контейнер для меню */
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        /* Кнопка три точки */
+        .btn-more {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #888;
+            cursor: pointer;
+            padding: 0 10px;
+            line-height: 1;
+            transition: 0.2s;
+        }
+
+            .btn-more:hover {
+                color: #333;
+            }
+
+        /* Само выпадающее меню */
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            background-color: white;
+            min-width: 160px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.1);
+            z-index: 10;
+            border-radius: 8px;
+            border: 1px solid #eee;
+            overflow: hidden;
+        }
+
+            .dropdown-content button {
+                width: 100%;
+                padding: 12px 16px;
+                border: none;
+                background: none;
+                text-align: left;
+                cursor: pointer;
+                color: #dc3545; /* Красный для удаления */
+                font-weight: bold;
+            }
+
+                .dropdown-content button:hover {
+                    background-color: #fff5f5;
+                }
+
+        /* Показать меню при добавлении класса */
+        .show {
+            display: block;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 20px 0 10px;
+        }
+
+        .btn-add-section {
+            background: #e7f3ff;
+            color: #0084ff;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
+        }
+
+            .btn-add-section:hover {
+                background: #0084ff;
+                color: white;
+            }
+
+        .progress-container {
+            width: 100%;
+            height: 6px;
+            background: #eef0f2;
+            border-radius: 10px;
+            margin-top: 12px;
+            overflow: hidden; /* Чтобы углы бара не вылезали */
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #0084ff, #00c6ff); /* Красивый градиент */
+            transition: width 0.5s ease-in-out; /* Плавная анимация при загрузке */
+        }
+
+        .target-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 6px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .btn-inline-add {
+            background: #f0f2f5;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 10px 15px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+
+            .btn-inline-add:hover {
+                background: #0084ff;
+                color: white;
+                border-color: #0084ff;
+            }
+
+        .input-row {
+            display: flex !important;
+            flex-direction: row !important;
+            gap: 8px !important;
+            align-items: stretch !important; /* Чтобы кнопка была одной высоты с полем */
+            margin-bottom: 15px;
+        }
+
+        /* Настройка самого выпадающего списка */
+        #category-select {
+            flex-grow: 1 !important; /* Занимает всё свободное место */
+            margin-bottom: 0 !important; /* Убираем нижний отступ, который всё ломает */
+        }
+
+        /* Кнопка "плюс" */
+        .btn-inline-add {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 45px;
+            height: 45px; /* Совпадает с высотой инпута */
+            background: #e7f3ff;
+            color: #0084ff;
+            border: 1px solid #cce4ff;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.5rem;
+            padding: 0;
+            flex-shrink: 0; /* Чтобы кнопка не сжималась */
+        }
+
+            .btn-inline-add:hover {
+                background: #0084ff;
+                color: white;
+            }
+
+        .btn-inline-del {
+            background: #fff5f5 !important;
+            color: #dc3545 !important;
+            border: 1px solid #ffc1c1 !important;
+            border-radius: 8px !important;
+            width: 45px;
+            height: 45px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+
+            .btn-inline-del:hover {
+                background: #dc3545 !important;
+                color: white !important;
+            }
+
+        .target-card-wrapper {
+            position: relative;
+        }
+
+        .btn-delete-target {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: #ccc;
+            cursor: pointer;
+            font-size: 1.3rem;
+            transition: 0.2s;
+        }
+
+            .btn-delete-target:hover {
+                color: #dc3545;
+                transform: scale(1.1);
+            }
+
+        .target-card-wrapper {
+            position: relative !important;
+            padding-top: 40px !important; /* Даем место для иконки сверху */
+        }
+
+        .btn-delete-target {
+            position: absolute !important;
+            top: 15px !important;
+            right: 15px !important;
+            background: none !important;
+            border: none !important;
+            color: #dc3545 !important; /* Яркий красный */
+            cursor: pointer !important;
+            font-size: 1.4rem !important;
+            padding: 5px !important;
+            z-index: 10 !important;
+            transition: 0.2s;
+        }
+
+            .btn-delete-target:hover {
+                color: #a71d2a !important;
+                transform: scale(1.2);
+            }
+    </style>
+</head>
+<body>
+    <div class="app-wrapper">
+        <aside id="sidebar">
+            <h2 style="font-size: 1.2rem; margin-bottom: 20px;">Мои финансы</h2>
+
+            <div class="section-header">
+                <div class="section-title" style="margin:0;">Счета</div>
+                <button class="btn-add-section" onclick="showCreateAccountForm()" title="Добавить счет">+</button>
+            </div>
+            <div id="accounts-list"></div>
+
+            <!-- Аналогично можно сделать для Копилок чуть позже -->
+            <div class="section-header">
+                <div class="section-title" style="margin:0;">Копилки</div>
+                <button class="btn-add-section" onclick="alert('Скоро!')">+</button>
+            </div>
+            <div id="targets-list"></div>
+        </aside>
+
+        <main id="main-content">
+            <div id="details-area">
+                <div style="text-align: center; color: #888; margin-top: 100px;">
+                    <h2>Добро пожаловать</h2>
+                    <p>Выберите счет слева, чтобы начать</p>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>

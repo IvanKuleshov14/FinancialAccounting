@@ -97,7 +97,8 @@ namespace FinancialAccounting.Application.Transactions
                     transaction.Category?.Name,
                     transaction.Description,
                     transaction.CreatedDay,
-                    transaction.CreatedTime
+                    transaction.CreatedTime,
+                    transaction?.RelatedTransactionId
                     )).ToList();
         }
 
@@ -113,7 +114,8 @@ namespace FinancialAccounting.Application.Transactions
                     transaction.Category?.Name,
                     transaction.Description,
                     transaction.CreatedDay,
-                    transaction.CreatedTime
+                    transaction.CreatedTime,
+                    transaction?.RelatedTransactionId
                     )).ToList();
         }
     }
