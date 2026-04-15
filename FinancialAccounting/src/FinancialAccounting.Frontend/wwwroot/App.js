@@ -126,9 +126,31 @@ async function showForm(accountId, accountName) {
             <input type="number" id="amount" placeholder="0.00" step="0.01" autofocus>
             
             <label class="section-title">Категория:</label>
-            <select id="category-select">
-                <!-- Категории вставит функция updateCategoryList -->
-            </select>
+            <div style="display: flex !important; align-items: center !important; gap: 8px !important; width: 100% !important;">
+                <select id="category-select" style="flex-grow: 1 !important; margin: 0 !important; width: auto !important; height: 45px !important;">
+                    <!-- Загрузится динамически -->
+                </select>
+                <button type="button" class="btn-inline-add"
+                    onclick="showCreateCategoryForm('${accountId}', '${accountName}')" 
+                    style="
+                        flex-shrink: 0 !important; 
+                        width: 45px !important; 
+                        height: 45px !important; 
+                        margin: 0 !important; 
+                        display: flex !important; 
+                        align-items: center !important; 
+                        justify-content: center !important;
+                        background: #0084ff !important; /* Тот самый синий */
+                        color: white !important;
+                        border: none !important;
+                        border-radius: 8px !important;
+                        font-size: 1.5rem !important;
+                        cursor: pointer !important;
+                        font-weight: bold !important;
+                    ">
+                    +
+                </button>
+            </div>
 
             <label class="section-title">Комментарий:</label>
             <input type="text" id="comment" placeholder="На что потратили?">
@@ -587,5 +609,56 @@ async function deleteAccountTarget(targetId, accountId, accountName) {
         showAccount(accountId, accountName);
     }
 }
+
+function showCreateCategoryForm(accountId, accountName) {
+    const area = document.getElementById('details-area');
+    // Определяем текущий тип из радио-кнопок (1 или 2)
+    const currentType = parseInt(document.querySelector('input[name="trType"]:checked').value);
+    const typeText = currentType === 1 ? "доход" : "расход";
+
+    area.innerHTML = `
+        <div class="form-card">
+            <h2 style="text-align:center; margin-bottom:20px;">Новая категория</h2>
+            <p style="text-align:center; color:#888;">Тип: <strong>${typeText}</strong></p>
+            
+            <label class="section-title">Название:</label>
+            <input type="text" id="new-cat-name" placeholder="Например: Аптека или Фриланс" autofocus>
+
+            <button class="btn-submit" onclick="submitCreateCategory('${accountId}', '${accountName}', ${currentType})">Создать</button>
+            <button onclick="showForm('${accountId}', '${accountName}')" style="background:none; border:none; color:#888; width:100%; margin-top:10px; cursor:pointer;">Отмена</button>
+        </div>
+    `;
+}
+
+async function submitCreateCategory(accountId, accountName, type) {
+    const name = document.getElementById('new-cat-name').value;
+    if (!name) return alert("Введите название");
+
+    const payload = {
+        name: name,
+        type: type // 1 для дохода, 2 для расхода
+    };
+
+    try {
+        const res = await fetch(`${API_URL}/Categories`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+            // Возвращаемся в форму транзакции
+            showForm(accountId, accountName);
+            // После отрисовки формы нужно принудительно обновить список категорий для текущего типа
+            setTimeout(() => updateCategoryList(type), 100);
+        } else {
+            alert("Ошибка при создании категории");
+        }
+    } catch (e) {
+        console.error(e);
+        showForm(accountId, accountName);
+    }
+}
+
 // Запуск
 loadAccounts();

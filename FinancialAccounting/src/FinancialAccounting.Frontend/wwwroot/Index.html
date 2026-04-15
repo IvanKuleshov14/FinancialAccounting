@@ -373,6 +373,64 @@
             align-items: center;
             margin-top: 6px;
         }
+
+        .input-group {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .btn-inline-add {
+            background: #f0f2f5;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 10px 15px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+
+            .btn-inline-add:hover {
+                background: #0084ff;
+                color: white;
+                border-color: #0084ff;
+            }
+
+        .input-row {
+            display: flex !important;
+            flex-direction: row !important;
+            gap: 8px !important;
+            align-items: stretch !important; /* Чтобы кнопка была одной высоты с полем */
+            margin-bottom: 15px;
+        }
+
+        /* Настройка самого выпадающего списка */
+        #category-select {
+            flex-grow: 1 !important; /* Занимает всё свободное место */
+            margin-bottom: 0 !important; /* Убираем нижний отступ, который всё ломает */
+        }
+
+        /* Кнопка "плюс" */
+        .btn-inline-add {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 45px;
+            height: 45px; /* Совпадает с высотой инпута */
+            background: #e7f3ff;
+            color: #0084ff;
+            border: 1px solid #cce4ff;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.5rem;
+            padding: 0;
+            flex-shrink: 0; /* Чтобы кнопка не сжималась */
+        }
+
+            .btn-inline-add:hover {
+                background: #0084ff;
+                color: white;
+            }
     </style>
 </head>
 <body>
