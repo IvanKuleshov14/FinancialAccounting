@@ -450,6 +450,51 @@
                 background: #dc3545 !important;
                 color: white !important;
             }
+
+        .target-card-wrapper {
+            position: relative;
+        }
+
+        .btn-delete-target {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: #ccc;
+            cursor: pointer;
+            font-size: 1.3rem;
+            transition: 0.2s;
+        }
+
+            .btn-delete-target:hover {
+                color: #dc3545;
+                transform: scale(1.1);
+            }
+
+        .target-card-wrapper {
+            position: relative !important;
+            padding-top: 40px !important; /* Даем место для иконки сверху */
+        }
+
+        .btn-delete-target {
+            position: absolute !important;
+            top: 15px !important;
+            right: 15px !important;
+            background: none !important;
+            border: none !important;
+            color: #dc3545 !important; /* Яркий красный */
+            cursor: pointer !important;
+            font-size: 1.4rem !important;
+            padding: 5px !important;
+            z-index: 10 !important;
+            transition: 0.2s;
+        }
+
+            .btn-delete-target:hover {
+                color: #a71d2a !important;
+                transform: scale(1.2);
+            }
     </style>
 </head>
 <body>

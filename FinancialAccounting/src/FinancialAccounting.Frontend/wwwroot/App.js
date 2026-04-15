@@ -110,8 +110,8 @@ async function showForm(accountId, accountName) {
 
     area.innerHTML = `
         <div class="form-card">
-            <h2 style="text-align:center; margin-bottom:20px;">Новая запись</h2>
-            <h4 style="text-align:center; margin-bottom:20px;">${accountName}</h4>
+            <h2 style="text-align:center; margin-bottom:20px;">Новая транзакция</h2>
+            <h4 style="text-align:center; color:#0084ff; margin-bottom:20px;">${accountName}</h4>
             
             <!-- Переключатель типа с вызовом фильтрации -->
             <div class="type-selector">
@@ -515,10 +515,37 @@ function renderTargetDetailsCard(acc) {
     const percent = Math.min(Math.round(acc.targetProgress || 0), 100);
 
     area.innerHTML = `
-        <div class="form-card" style="border-left: 5px solid #0084ff;">
+        <div class="form-card" style="position: relative !important; padding-top: 50px !important;">
+            
+            <!-- КНОПКА УДАЛЕНИЯ: Жесткое позиционирование через inline-style -->
+            <button onclick="deleteAccountTarget('${acc.accountTargetId}', '${acc.id}', '${acc.name}')" 
+    style="
+        position: absolute !important;
+        top: 20px !important;
+        right: 20px !important;
+        width: 40px !important;
+        height: 40px !important;
+        background: #fff5f5 !important; /* Нежно-красный фон */
+        border: 1px solid #ffc1c1 !important; /* Граница */
+        color: #dc3545 !important; /* Ярко-красная корзина */
+        border-radius: 8px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        cursor: pointer !important;
+        z-index: 999 !important;
+        transition: 0.2s !important;
+        font-size: 1.2rem !important;
+    " 
+    onmouseover="this.style.background='#dc3545'; this.style.color='white'" 
+    onmouseout="this.style.background='#fff5f5'; this.style.color='#dc3545'"
+    title="Удалить цель">
+    🗑
+</button>
+
             <h2 style="margin-bottom:10px;">🎯 ${acc.targetName}</h2>
             <div style="font-size: 1.1rem; margin-bottom: 20px; color: #65676b;">
-                Привязана к счету: <strong>${acc.name}</strong>
+                Счет: <strong>${acc.name}</strong>
             </div>
 
             <div class="progress-container" style="height: 15px; margin-bottom: 10px;">
@@ -527,16 +554,15 @@ function renderTargetDetailsCard(acc) {
             
             <div style="display:flex; justify-content:space-between; margin-bottom:30px;">
                 <span style="font-weight:bold; font-size: 1.2rem;">${percent}%</span>
-                <span>Накоплено: <strong>${acc.total.toLocaleString()} ₽</strong> из ${acc.targetGoal?.toLocaleString()} ₽</span>
+                <span>${acc.total.toLocaleString()} / ${acc.targetGoal?.toLocaleString()} ₽</span>
             </div>
 
             <div style="display:flex; gap:10px;">
-                <!-- Передаем AccountTargetId для удаления -->
-                <button class="btn-submit" style="background:#dc3545;" 
-                    onclick="deleteAccountTarget('${acc.accountTargetId}', '${acc.id}', '${acc.name}')">
-                    Удалить цель
+                <button class="btn-submit" style="background:#f0f2f5; color:#1a1a1a; width: auto; padding: 10px 20px;" 
+                    onclick="showEditTargetForm('${acc.id}', '${acc.name}', '${acc.targetName}', ${acc.targetGoal}, '${acc.accountTargetId}')">
+                    Изменить цель
                 </button>
-                <button class="btn-submit" style="background:#6c757d;" 
+                <button class="btn-submit" style="background:#6c757d; width: auto; padding: 10px 20px;" 
                     onclick="showAccount('${acc.id}', '${acc.name}')">
                     Назад
                 </button>
@@ -674,6 +700,55 @@ async function deleteCurrentCategory(accountId, accountName) {
         console.error(e);
         // Fallback для CORS
         location.reload();
+    }
+}
+
+function showEditTargetForm(accountId, accountName, oldName, oldGoal, targetId) {
+    const area = document.getElementById('details-area');
+    area.innerHTML = `
+        <div class="form-card">
+            <h2 style="text-align:center; margin-bottom:20px;">Изменить цель</h2>
+            
+            <label class="section-title">Название:</label>
+            <input type="text" id="edit-target-name" value="${oldName}">
+
+            <label class="section-title">Новая сумма цели (₽):</label>
+            <input type="number" id="edit-target-goal" value="${oldGoal}">
+
+            <button class="btn-submit" onclick="submitUpdateTarget('${targetId}', '${accountId}', '${accountName}')">Сохранить изменения</button>
+            <button onclick="showAccount('${accountId}', '${accountName}')" style="background:none; border:none; color:#888; width:100%; margin-top:10px; cursor:pointer;">Отмена</button>
+        </div>
+    `;
+}
+
+async function submitUpdateTarget(targetId, accountId, accountName) {
+    const newName = document.getElementById('edit-target-name').value;
+    const newGoal = document.getElementById('edit-target-goal').value;
+
+    if (!newName || !newGoal) return alert("Заполните поля");
+
+    const payload = {
+        name: newName,
+        goal: parseFloat(newGoal)
+    };
+
+    try {
+        const res = await fetch(`${API_URL}/AccountTargets/${targetId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+            await loadAccounts(); // Чтобы обновился сайдбар
+            showAccount(accountId, accountName); // Возвращаемся в счет
+        } else {
+            alert("Ошибка при обновлении цели");
+        }
+    } catch (e) {
+        console.error(e);
+        await loadAccounts();
+        showAccount(accountId, accountName);
     }
 }
 
