@@ -96,44 +96,82 @@ async function showAccount(id, name) {
 }
 
 // Форма создания транзакции
-async function showForm(accountId) {
+let allCategories = []; // Глобальная переменная для хранения категорий
+
+async function showForm(accountId, accountName) {
     const area = document.getElementById('details-area');
-    // Сначала загрузим категории для выпадашки
-    const catRes = await fetch(`${API_URL}/categories`);
-    const categories = await catRes.json();
-    const currentName = document.querySelector('h1')?.innerText || "Счет";
+
+    // 1. Загружаем категории, если еще не загрузили
+    try {
+        const catRes = await fetch(`${API_URL}/Categories`);
+    } catch (e) {
+        console.error("Ошибка загрузки категорий", e);
+    }
 
     area.innerHTML = `
         <div class="form-card">
-            <h2 style="text-align:center; margin-bottom:20px;">${currentName}</h2>
+            <h2 style="text-align:center; margin-bottom:20px;">Новая запись</h2>
+            <h4 style="text-align:center; margin-bottom:20px;">${accountName}</h4>
             
+            <!-- Переключатель типа с вызовом фильтрации -->
             <div class="type-selector">
-                <input type="radio" name="trType" id="type-exp" value="2" checked>
+                <input type="radio" name="trType" id="type-exp" value="2" checked onchange="updateCategoryList(2)">
                 <label class="type-btn" for="type-exp">Расход</label>
                 
-                <input type="radio" name="trType" id="type-inc" value="1">
+                <input type="radio" name="trType" id="type-inc" value="1" onchange="updateCategoryList(1)">
                 <label class="type-btn" for="type-inc">Доход</label>
             </div>
 
-            <input type="number" id="amount" placeholder="0.00 ₽" step="0.01">
+            <label class="section-title">Сумма (₽):</label>
+            <input type="number" id="amount" placeholder="0.00" step="0.01" autofocus>
             
-            <select id="category">
-                ${categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('')}
+            <label class="section-title">Категория:</label>
+            <select id="category-select">
+                <!-- Категории вставит функция updateCategoryList -->
             </select>
 
-            <input type="text" id="comment" placeholder="Комментарий">
+            <label class="section-title">Комментарий:</label>
+            <input type="text" id="comment" placeholder="На что потратили?">
 
-            <button class="btn-submit" onclick="saveTransaction('${accountId}', '${currentName}')">Сохранить</button>
-            <button onclick="showAccount('${accountId}', '${currentName}')" style="background:none; border:none; color:#888; width:100%; margin-top:10px; cursor:pointer;">Отмена</button>
+            <button class="btn-submit" onclick="saveTransaction('${accountId}', '${accountName}')">Сохранить</button>
+            <button onclick="showAccount('${accountId}', '${accountName}')" style="background:none; border:none; color:#888; width:100%; margin-top:10px; cursor:pointer;">Отмена</button>
         </div>
     `;
+
+    // Инициализируем список категорий для типа "Расход" (2) по умолчанию
+    updateCategoryList(2);
+}
+
+// Функция фильтрации категорий по типу
+async function updateCategoryList(type) {
+    const select = document.getElementById('category-select');
+    if (!select) return;
+
+    try {
+        // Делаем запрос к твоему методу, передавая тип (1 или 2)
+        // Проверь, как именно в контроллере прописан маршрут (query string или route)
+        const res = await fetch(`${API_URL}/Categories?type=${type}`);
+        const categories = await res.json();
+
+        if (categories.length === 0) {
+            select.innerHTML = '<option value="">Нет категорий для этого типа</option>';
+        } else {
+            select.innerHTML = categories.map(c =>
+                `<option value="${c.id || c.Id}">${c.name || c.Name}</option>`
+            ).join('');
+        }
+    } catch (e) {
+        console.error("Ошибка загрузки категорий по типу:", e);
+        select.innerHTML = '<option value="">Ошибка загрузки</option>';
+    }
 }
 
 // Сохранение транзакции
 async function saveTransaction(accountId, accountName) { // Добавили accountName
     const valInput = document.getElementById('amount').value;
     const typeInput = document.querySelector('input[name="trType"]:checked').value;
-    const catInput = document.getElementById('category').value;
+    const catInput = document.getElementById('category-select').value;
+    const categoryId = catInput === "" ? null : catInput;
     const descInput = document.getElementById('comment').value;
 
     if (!valInput) return alert("Введите сумму");
