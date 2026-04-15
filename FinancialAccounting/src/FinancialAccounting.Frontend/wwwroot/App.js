@@ -825,5 +825,116 @@ async function deleteCurrentCategoryConfirm(categoryId, accountId, accountName) 
     } catch (e) { console.error(e); showForm(accountId, accountName); }
 }
 
+async function loadTargets() {
+    try {
+        const res = await fetch(`${API_URL}/Targets`);
+        const targets = await res.json();
+        const list = document.getElementById('targets-list');
+
+        // Очищаем список перед загрузкой
+        list.innerHTML = '';
+
+        if (targets.length === 0) {
+            list.innerHTML = '<div style="color:#bbb; font-size:0.8rem; text-align:center;">Пока нет целей</div>';
+            return;
+        }
+
+        list.innerHTML = targets.map(t => {
+            // Используем Progress из твоего DTO (предполагаем, что это проценты 0-100)
+            const progressValue = t.progress ?? 0;
+            const barWidth = Math.min(progressValue, 100);
+
+            return `
+                <div class="card" onclick="showTargetDetails('${t.id}', '${t.name}')">
+                    <div class="card-header">
+                        <span style="font-weight: 500;">${t.name}</span>
+                        <span style="color: #28a745; font-weight: bold;">${t.total.toLocaleString()} ₽</span>
+                    </div>
+                    
+                    <div class="progress-container" style="height: 6px; margin-top: 10px;">
+                        <div class="progress-bar" style="width: ${barWidth}%; background: #28a745;"></div>
+                    </div>
+                    
+                    <div class="target-info" style="margin-top: 5px;">
+                        <span style="font-size: 0.7rem; color: #888;">Цель: ${t.goal.toLocaleString()} ₽</span>
+                        <span style="font-size: 0.7rem; font-weight: bold;">${Math.round(progressValue)}%</span>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    } catch (e) {
+        console.error("Ошибка загрузки автономных целей:", e);
+    }
+}
+
+function showCreateTargetForm() {
+    const area = document.getElementById('details-area');
+    area.innerHTML = `
+        <div class="form-card">
+            <h2 style="text-align:center; margin-bottom:20px;">Новая копилка</h2>
+            
+            <label class="section-title">На что копим?</label>
+            <input type="text" id="target-name" placeholder="Например: Подушка безопасности" autofocus>
+
+            <label class="section-title">Сколько уже отложено (₽):</label>
+            <input type="number" id="target-total" value="0" step="0.01">
+
+            <label class="section-title">Цель (₽):</label>
+            <input type="number" id="target-goal" placeholder="100000" step="0.01">
+
+            <button class="btn-submit" onclick="submitCreateTarget()">Создать копилку</button>
+            <button onclick="location.reload()" style="background:none; border:none; color:#888; width:100%; margin-top:10px; cursor:pointer;">Отмена</button>
+        </div>
+    `;
+}
+
+async function submitCreateTarget() {
+    const nameInput = document.getElementById('target-name');
+    const goalInput = document.getElementById('target-goal');
+    // Добавим поле начальной суммы, раз DTO это позволяет
+    const totalInput = document.getElementById('target-total') || { value: 0 };
+
+    if (!nameInput.value.trim() || !goalInput.value) {
+        alert("Заполните название и сумму цели");
+        return;
+    }
+
+    const payload = {
+        userId: "3fa85f64-5717-4562-b3fc-2c963f66afa6", // Твой системный Guid
+        name: nameInput.value.trim(),
+        total: parseFloat(totalInput.value) || 0,
+        goal: parseFloat(goalInput.value)
+    };
+
+    try {
+        const res = await fetch(`${API_URL}/Targets`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+            await loadTargets(); // Обновляем список в сайдбаре
+
+            try {
+                const created = await res.json();
+                showTargetDetails(created.id, created.name);
+            } catch {
+                // Если бэкенд не вернул объект, просто выводим успех
+                document.getElementById('details-area').innerHTML = "<h3>Копилка создана!</h3>";
+            }
+        } else {
+            const err = await res.text();
+            alert("Ошибка: " + err);
+        }
+    } catch (e) {
+        console.error(e);
+        await loadTargets();
+    }
+}
+
+// Вызови эту функцию в самом конце app.js, чтобы она работала при старте
+loadTargets();
+
 // Запуск
 loadAccounts();
