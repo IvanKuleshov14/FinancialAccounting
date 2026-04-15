@@ -126,31 +126,21 @@ async function showForm(accountId, accountName) {
             <input type="number" id="amount" placeholder="0.00" step="0.01" autofocus>
             
             <label class="section-title">Категория:</label>
-            <div style="display: flex !important; align-items: center !important; gap: 8px !important; width: 100% !important;">
-                <select id="category-select" style="flex-grow: 1 !important; margin: 0 !important; width: auto !important; height: 45px !important;">
-                    <!-- Загрузится динамически -->
-                </select>
-                <button type="button" class="btn-inline-add"
-                    onclick="showCreateCategoryForm('${accountId}', '${accountName}')" 
-                    style="
-                        flex-shrink: 0 !important; 
-                        width: 45px !important; 
-                        height: 45px !important; 
-                        margin: 0 !important; 
-                        display: flex !important; 
-                        align-items: center !important; 
-                        justify-content: center !important;
-                        background: #0084ff !important; /* Тот самый синий */
-                        color: white !important;
-                        border: none !important;
-                        border-radius: 8px !important;
-                        font-size: 1.5rem !important;
-                        cursor: pointer !important;
-                        font-weight: bold !important;
-                    ">
-                    +
-                </button>
-            </div>
+<div class="input-row" style="display: flex; gap: 8px; align-items: center;">
+    <select id="category-select" style="flex-grow: 1; height: 45px; margin: 0;">
+        <!-- Загрузится динамически -->
+    </select>
+
+    <!-- Кнопка УДАЛЕНИЯ выбранной категории -->
+    <button type="button" class="btn-inline-del"
+            onclick="deleteCurrentCategory('${accountId}', '${accountName}')" 
+            title="Удалить выбранную категорию">🗑</button>
+
+    <!-- Кнопка ДОБАВЛЕНИЯ новой -->
+    <button type="button" class="btn-inline-add" 
+            onclick="showCreateCategoryForm('${accountId}', '${accountName}')" 
+            style="background: #0084ff; color: white; border: none; border-radius: 8px; width: 45px; height: 45px; font-size: 1.5rem;">+</button>
+</div>
 
             <label class="section-title">Комментарий:</label>
             <input type="text" id="comment" placeholder="На что потратили?">
@@ -657,6 +647,33 @@ async function submitCreateCategory(accountId, accountName, type) {
     } catch (e) {
         console.error(e);
         showForm(accountId, accountName);
+    }
+}
+
+async function deleteCurrentCategory(accountId, accountName) {
+    const select = document.getElementById('category-select');
+    const categoryId = select.value;
+    const categoryName = select.options[select.selectedIndex]?.text;
+
+    if (!categoryId || categoryId === "") return alert("Выберите категорию для удаления");
+    if (!confirm(`Скрыть категорию "${categoryName}"? Она останется в старых транзакциях, но исчезнет из этого списка.`)) return;
+
+    try {
+        const res = await fetch(`${API_URL}/Categories/${categoryId}`, {
+            method: 'DELETE'
+        });
+
+        if (res.ok) {
+            // Определяем текущий тип (1 или 2), чтобы обновить список
+            const currentType = parseInt(document.querySelector('input[name="trType"]:checked').value);
+            await updateCategoryList(currentType);
+        } else {
+            alert("Ошибка при удалении категории");
+        }
+    } catch (e) {
+        console.error(e);
+        // Fallback для CORS
+        location.reload();
     }
 }
 
