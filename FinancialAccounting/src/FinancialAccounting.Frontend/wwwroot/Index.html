@@ -616,6 +616,69 @@
             /* Убираем фиксированную ширину, она придет из JS */
             transition: width 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
+
+        .filter-box {
+            display: flex;
+            gap: 10px;
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            align-items: center;
+            border: 1px solid #efefef;
+        }
+
+            .filter-box select {
+                padding: 8px 12px;
+                border-radius: 8px;
+                border: 1px solid #ddd;
+                outline: none;
+                cursor: pointer;
+            }
+
+        .inline-filter {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+            .inline-filter select {
+                padding: 2px 8px;
+                border-radius: 6px;
+                border: 1px solid #ddd;
+                background: #f8f9fa;
+                font-size: 0.85rem;
+                cursor: pointer;
+                color: #4a5568;
+            }
+
+                .inline-filter select:hover {
+                    border-color: #0084ff;
+                }
+
+        .history-header {
+            display: flex;
+            align-items: center; /* Центрируем всё по вертикали */
+            gap: 15px; /* Расстояние между текстом и селекторами */
+            margin-bottom: 20px;
+            margin-top: 10px;
+        }
+
+            .history-header h4 {
+                margin: 0;
+                white-space: nowrap; /* Чтобы заголовок не переносился */
+            }
+
+        /* Компактные селекторы */
+        .select-inline {
+            padding: 4px 8px;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+            background: #fff;
+            font-size: 0.9rem;
+            cursor: pointer;
+            outline: none;
+        }
     </style>
 </head>
 <body>

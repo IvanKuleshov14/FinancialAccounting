@@ -1304,91 +1304,134 @@ async function loadTotalBalance() {
     }
 }
 
+let currentFilterMonth = new Date().getMonth(); // 0-11
+let currentFilterYear = new Date().getFullYear();
+
 async function showTotalDashboard() {
     const area = document.getElementById('details-area');
-    area.innerHTML = '<div class="text-center mt-5">Считаем доли счетов...</div>';
+    area.innerHTML = '<div class="text-center mt-5">Анализ данных...</div>';
 
     try {
-        // 1. Загружаем счета (для диаграммы) и транзакции (для сводки)
         const [accRes, txRes] = await Promise.all([
             fetch(`${API_URL}/Accounts`),
-            fetch(`${API_URL}/Transactions?page=1&limit=50`)
+            fetch(`${API_URL}/Transactions?page=1&limit=500`) // Берем побольше для истории
         ]);
 
         const accounts = await accRes.json();
-        const txs = await txRes.json();
+        const allTxs = await txRes.json();
 
-        // 2. Расчеты для диаграммы
+        const filteredTxs = allTxs.filter(t => {
+            const date = new Date(t.createdTime);
+            const yearMatch = date.getFullYear() === currentFilterYear;
+
+            // Если currentFilterMonth === -1, значит месяц не важен (пропускаем всех)
+            const monthMatch = currentFilterMonth === -1 || date.getMonth() === currentFilterMonth;
+
+            return yearMatch && monthMatch;
+        });
+
         const totalSum = accounts.reduce((sum, acc) => sum + acc.total, 0);
-        const colors = ['#0084ff', '#28a745', '#ffc107', '#17a2b8', '#6610f2', '#fd7e14']; // Цвета для сегментов
-
-        // 3. Расчеты для сводки
-        const income = txs.filter(t => t.type === 1).reduce((sum, t) => sum + t.value, 0);
-        const expense = txs.filter(t => t.type === 2).reduce((sum, t) => sum + t.value, 0);
+        const income = filteredTxs.filter(t => t.type === 1).reduce((sum, t) => sum + t.value, 0);
+        const expense = filteredTxs.filter(t => t.type === 2).reduce((sum, t) => sum + t.value, 0);
+        const colors = ['#0084ff', '#28a745', '#ffc107', '#17a2b8', '#6610f2'];
 
         area.innerHTML = `
-    <h1 class="mb-4">Общий обзор</h1>
+    <h1 class="mb-4">Общий капитал</h1>
     
-    <div class="form-card" style="margin-bottom: 30px;">
-        <h5 class="mb-3">Распределение средств по счетам</h5>
+    <!-- 1. ДИАГРАММА -->
+    <div class="form-card" style="margin-bottom: 25px;">
+        <h5 class="mb-3">Распределение средств (сейчас)</h5>
         <div class="chart-container">
             ${accounts.map((acc, i) => {
-            // Высчитываем процент от общей суммы
             const share = totalSum > 0 ? (acc.total / totalSum) * 100 : 0;
-
-            // Если денег на счету 0, этот сегмент вообще не рисуем
-            if (share <= 0) return '';
-
-            return `
-                    <div class="chart-segment" 
-                         style="width: ${share.toFixed(2)}%; background: ${colors[i % colors.length]};" 
-                         title="${acc.name}: ${Math.round(share)}%">
-                    </div>`;
+            return share > 0 ? `<div class="chart-segment" style="width:${share}%; background:${colors[i % colors.length]}" title="${acc.name}"></div>` : '';
         }).join('')}
         </div>
-                <!-- Легенда под диаграммой -->
-                <div style="display: flex; flex-wrap: wrap; gap: 15px; margin-top: 10px;">
-                    ${accounts.map((acc, i) => `
-                        <div style="display: flex; align-items: center; gap: 5px; font-size: 0.8rem;">
-                            <div style="width: 10px; height: 10px; border-radius: 2px; background: ${colors[i % colors.length]};"></div>
-                            <span>${acc.name}</span>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
+    </div>
 
-            <!-- Статистические карточки (как были) -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 40px;">
-                <div class="form-card" style="border-left: 5px solid #28a745; margin: 0;">
-                    <small class="text-muted text-uppercase">Доходы (лента)</small>
-                    <div style="font-size: 1.5rem; font-weight: bold; color: #28a745;">+${income.toLocaleString()} ₽</div>
-                </div>
-                <div class="form-card" style="border-left: 5px solid #dc3545; margin: 0;">
-                    <small class="text-muted text-uppercase">Расходы (лента)</small>
-                    <div style="font-size: 1.5rem; font-weight: bold; color: #dc3545;">-${expense.toLocaleString()} ₽</div>
-                </div>
-            </div>
+    <!-- 2. СТАТИСТИКА -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px;">
+        <div class="form-card" style="border-left: 5px solid #28a745; margin: 0; padding: 15px;">
+            <small class="text-muted text-uppercase" style="font-size: 0.7rem;">Доходы за период</small>
+            <div style="font-size: 1.3rem; font-weight: bold; color: #28a745;">+${income.toLocaleString()} ₽</div>
+        </div>
+        <div class="form-card" style="border-left: 5px solid #dc3545; margin: 0; padding: 15px;">
+            <small class="text-muted text-uppercase" style="font-size: 0.7rem;">Расходы за период</small>
+            <div style="font-size: 1.3rem; font-weight: bold; color: #dc3545;">-${expense.toLocaleString()} ₽</div>
+        </div>
+    </div>
 
-            <h4 class="section-title">Единая лента операций</h4>
-            <div id="global-transactions-list">
-                ${txs.map(t => `
-                    <div class="tr-item">
-                        <div class="tr-info">
-                            <strong>${t.categoryName || 'Без категории'}</strong>
-                            <div style="font-size: 0.8rem; color: #0084ff;">Счет: ${t.accountName}</div>
-                            ${t.description ? `<span class="tr-desc">${t.description}</span>` : ''}
-                            <small style="color: #bcc0c4;">${new Date(t.createdTime).toLocaleDateString()}</small>
-                        </div>
-                        <span class="${t.type === 2 ? 'tr-amount-neg' : 'tr-amount-pos'}">
-                            ${t.type === 2 ? '-' : '+'}${t.value.toLocaleString()} ₽
-                        </span>
-                    </div>
-                `).join('')}
+    <!-- 3. СТРОКА ФИЛЬТРАЦИИ НА ВСЮ ШИРИНУ -->
+    <div style="display: flex !important; justify-content: space-between !important; align-items: center !important; margin: 25px 0 15px 0 !important; width: 100% !important;">
+
+        <!-- Заголовок слева -->
+        <h4 style="margin: 0 !important; font-size: 1.1rem; white-space: nowrap !important;">Операции за период</h4>
+
+        <!-- Группа фильтров справа -->
+        <div style="display: flex !important; gap: 10px !important; align-items: center !important;">
+    <select class="select-inline" id="month-select" onchange="changeGlobalFilter(this.value, null)"
+        style="
+            height: 38px !important;
+            margin: 0 !important;
+            padding: 0 12px !important;
+            border-radius: 8px !important;
+            border: 1px solid #ddd !important;
+            background: white !important;
+            cursor: pointer !important;
+            box-sizing: border-box !important;
+            font-size: 0.9rem !important;
+        ">
+        <option value="-1" ${currentFilterMonth === -1 ? 'selected' : ''}>Все месяцы</option>
+        ${['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь']
+                .map((m, i) => `<option value="${i}" ${i === currentFilterMonth ? 'selected' : ''}>${m}</option>`).join('')}
+    </select>
+
+    <select class="select-inline" id="year-select" onchange="changeGlobalFilter(null, this.value)" 
+        style="
+            height: 38px !important; 
+            margin: 0 !important; 
+            padding: 0 12px !important; 
+            border-radius: 8px !important; 
+            border: 1px solid #ddd !important; 
+            background: white !important; 
+            cursor: pointer !important;
+            box-sizing: border-box !important;
+            font-size: 0.9rem !important;
+        ">
+        ${[2024, 2025, 2026].map(y => `<option value="${y}" ${y === currentFilterYear ? 'selected' : ''}>${y}</option>`).join('')}
+    </select>
+</div>
+    </div>
+
+    <div id="global-transactions-list">
+        ${filteredTxs.length > 0 ? filteredTxs.map(t => `
+            <div class="tr-item">
+                <div class="tr-info">
+                    <strong>${t.categoryName || 'Без категории'}</strong>
+                    <div style="font-size: 0.75rem; color: #0084ff;">${t.accountName}</div>
+                    <small style="color: #888;">${new Date(t.createdTime).toLocaleDateString()}</small>
+                </div>
+                <span class="${t.type === 2 ? 'tr-amount-neg' : 'tr-amount-pos'}">
+                    ${t.type === 2 ? '-' : '+'}${t.value.toLocaleString()} ₽
+                </span>
             </div>
-        `;
+        `).join('') : '<p class="text-center text-muted p-5">Транзакций за этот период не найдено</p>'}
+    </div>
+`;
     } catch (e) {
-        area.innerHTML = "<h2>Ошибка загрузки аналитики</h2>";
+        console.error(e);
+        area.innerHTML = "<h2>Ошибка загрузки данных</h2>";
     }
+}
+
+// Функция обновления фильтра
+function changeGlobalFilter(month, year) {
+    if (month !== null) {
+        // Если выбрано "Все месяцы", значение будет -1
+        currentFilterMonth = parseInt(month);
+    }
+    if (year !== null) currentFilterYear = parseInt(year);
+    showTotalDashboard();
 }
 
 loadTotalBalance();
