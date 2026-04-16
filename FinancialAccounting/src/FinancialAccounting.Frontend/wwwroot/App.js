@@ -43,63 +43,123 @@ async function loadAccounts() {
 // Показ истории транзакций
 async function showAccount(id, name) {
     const area = document.getElementById('details-area');
-    area.innerHTML = `
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
-        <div id="account-title-container">
-            <h1 style="display:inline-block;">${name}</h1>
-            <button class="btn-edit" onclick="enableEditAccount('${id}', '${name}')">✎</button>
-            <div id="account-target-badge"></div> <!-- Место для названия цели -->
-        </div>
-        <div style="display:flex; gap:10px;">
-            <button class="btn-submit" style="background:#6c757d; width:auto; padding:10px 20px;" onclick="showAccountTargetForm('${id}', '${name}')">🎯 Цель</button>
-            <button class="btn-submit" style="background:#6c757d; width:auto; padding:10px 20px;" onclick="showTransferForm('${id}', '${name}')">⇄ Перевод</button>
-            <button class="btn-submit" style="width:auto; padding:10px 20px;" onclick="showForm('${id}', '${name}')">+ Операция</button>
-            <div class="dropdown">
-                 <button class="btn-more" onclick="toggleAccountMenu()">⋮</button>
-                 <div id="account-dropdown" class="dropdown-content">
-                    <button onclick="deleteAccount('${id}')">🗑 Удалить счет</button>
-                 </div>
+    area.innerHTML = '<div style="text-align:center; margin-top:50px;">Загрузка...</div>';
+
+    try {
+        const res = await fetch(`${API_URL}/transactions/${id}?page=1&limit=500`);
+        const allTxs = await res.json();
+
+        // 1. Фильтрация
+        const filteredTxs = allTxs.filter(t => {
+            const date = new Date(t.createdTime);
+            const mMatch = currentFilterMonth === -1 || date.getMonth() === currentFilterMonth;
+            const yMatch = date.getFullYear() === currentFilterYear;
+            return mMatch && yMatch;
+        });
+
+        const income = filteredTxs.filter(t => t.type === 1).reduce((sum, t) => sum + t.value, 0);
+        const expense = filteredTxs.filter(t => t.type === 2).reduce((sum, t) => sum + t.value, 0);
+
+        area.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
+                <!-- Название + Карандаш в один ряд -->
+                <div id="account-title-container" style="display: flex; align-items: center; gap: 10px;">
+                    <h1 style="margin:0;">${name}</h1>
+                    <button class="btn-edit" onclick="enableEditAccount('${id}', '${name}')" style="margin:0;">✎</button>
+                </div>
+
+                <!-- Блок кнопок + Три точки -->
+                <div style="display:flex; gap:10px; align-items: center;">
+                    <button class="btn-submit" style="background:#6c757d; width:auto; padding:10px 20px;" onclick="showAccountTargetForm('${id}', '${name}')">🎯 Цель</button>
+                    <button class="btn-submit" style="background:#6c757d; width:auto; padding:10px 20px;" onclick="showTransferForm('${id}', '${name}')">⇄ Перевод</button>
+                    <button class="btn-submit" style="background:#28a745; width:auto; padding:10px 20px;" onclick="showForm('${id}', '${name}')">+ Операция</button>
+                    
+                    <div class="dropdown">
+                        <button class="btn-more" onclick="toggleAccountMenu()">⋮</button>
+                        <div id="account-dropdown" class="dropdown-content">
+                            <button onclick="deleteAccount('${id}')">🗑 Удалить счет</button>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
-    </div>
-    <div id="transactions-list">Загрузка...</div>
-`;
 
-    const res = await fetch(`${API_URL}/transactions/${id}?page=1&limit=20`);
-    const txs = await res.json();
+            <!-- Карточки статистики -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 30px;">
+                <div class="form-card" style="border-left: 5px solid #28a745; margin:0; padding:15px;">
+                    <small style="color:#888; text-transform:uppercase; font-size:0.7rem; font-weight:bold;">Доходы</small>
+                    <div style="font-size: 1.3rem; font-weight: bold; color: #28a745;">+${income.toLocaleString()} ₽</div>
+                </div>
+                <div class="form-card" style="border-left: 5px solid #dc3545; margin:0; padding:15px;">
+                    <small style="color:#888; text-transform:uppercase; font-size:0.7rem; font-weight:bold;">Расходы</small>
+                    <div style="font-size: 1.3rem; font-weight: bold; color: #dc3545;">-${expense.toLocaleString()} ₽</div>
+                </div>
+            </div>
 
-    document.getElementById('transactions-list').innerHTML = txs.map(t => {
-        // 1. Проверяем, перевод это или нет
-        const isTransfer = t.relatedTransactionId !== null;
+            <!-- Фильтрация в ряд -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin: 25px 0 15px 0;">
+                <h4 style="margin: 0; font-size: 1.1rem;">История операций</h4>
+                <div style="display: flex; gap: 10px;">
+                    <select class="select-inline" onchange="changeAccountFilter('${id}', '${name}', this.value, null)" style="height:35px; border-radius:8px;">
+                        <option value="-1" ${currentFilterMonth === -1 ? 'selected' : ''}>Все месяцы</option>
+                        ${['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'].map((m, i) =>
+            `<option value="${i}" ${i === currentFilterMonth ? 'selected' : ''}>${m}</option>`).join('')}
+                    </select>
+                    <select class="select-inline" onchange="changeAccountFilter('${id}', '${name}', null, this.value)" style="height:35px; border-radius:8px;">
+                        <option value="2025" ${currentFilterYear === 2025 ? 'selected' : ''}>2025</option>
+                        <option value="2026" ${currentFilterYear === 2026 ? 'selected' : ''}>2026</option>
+                    </select>
+                </div>
+            </div>
 
-        // 2. Определяем заголовок: Категория или спец-текст для перевода
-        let displayTitle = t.categoryName || 'Без категории';
-        if (isTransfer) {
-            displayTitle = t.type === 2 ? '⇄ Перевод на другой счет' : '⇄ Перевод с другого счета';
-        }
+            <div id="transactions-list">
+                ${filteredTxs.map(t => {
+                const isTransfer = t.relatedTransactionId !== null;
+                const title = isTransfer ? (t.type === 2 ? '⇄ Перевод (Расход)' : '⇄ Перевод (Зачисление)') : (t.categoryName || 'Без категории');
+                return `
+                        <div class="tr-item">
+                            <button class="btn-delete" onclick="deleteTransaction('${t.id}', '${id}', '${name}')">&times;</button>
+                            <div class="tr-info">
+                                <strong>${title}</strong>
+                                <span class="tr-desc">${t.description || ''}</span>
+                                <small style="color: #bcc0c4;">${new Date(t.createdTime).toLocaleDateString()}</small>
+                            </div>
+                            <span class="${t.type === 2 ? 'tr-amount-neg' : 'tr-amount-pos'}">
+                                ${t.type === 2 ? '-' : '+'}${t.value.toLocaleString()} ₽
+                            </span>
+                        </div>`;
+            }).join('')}
+            </div>
+        `;
 
-        // 3. Классы для суммы (Type 2 - Расход, Type 1 - Доход)
-        const amountClass = t.type === 2 ? 'tr-amount-neg' : 'tr-amount-pos';
-        const sign = t.type === 2 ? '-' : '+';
+    } catch (e) {
+        console.error(e);
+        area.innerHTML = "<h2>Ошибка загрузки счета</h2>";
+    }
+}
 
-        return `
-    <div class="tr-item">
-        <button class="btn-delete" onclick="deleteTransaction('${t.id}', '${id}', '${name}')">&times;</button>
-        
-        <div class="tr-info">
-            <strong>${displayTitle}</strong>
-            <!-- Описание: если это перевод и оно пустое, можно вывести что-то по умолчанию -->
-            <span class="tr-desc">${t.description || (isTransfer ? 'Внутренняя операция' : '')}</span>
-            <small style="color: #bcc0c4; font-size: 0.75rem;">
-                ${new Date(t.createdTime).toLocaleDateString()}
-            </small>
-        </div>
-        <span class="${amountClass}">
-            ${sign}${t.value.toLocaleString()} ₽
-        </span>
-    </div>
-    `;
-    }).join('');
+// Вспомогательная функция (обязательно добавь её в app.js)
+function changeAccountFilter(id, name, month, year) {
+    if (month !== null) currentFilterMonth = parseInt(month);
+    if (year !== null) currentFilterYear = parseInt(year);
+    showAccount(id, name);
+}
+
+function changeAccountFilter(id, name, month, year) {
+    if (month !== null) currentFilterMonth = parseInt(month);
+    if (year !== null) currentFilterYear = parseInt(year);
+    showAccount(id, name); // Перерисовываем текущий счет
+}
+
+// Вспомогательная функция для баджа (вынесли для чистоты)
+async function updateTargetBadge(id) {
+    try {
+        const res = await fetch(`${API_URL}/Accounts/${id}`);
+        const acc = await res.json();
+        const badge = document.getElementById('account-target-badge');
+        //if (acc.targetName && badge) {
+        //    badge.innerHTML = `<div style="font-size: 0.9rem; color: #65676b; margin-top: 5px;">🎯 Цель: <strong>${acc.targetName}</strong> (${Math.round(acc.targetProgress)}%)</div>`;
+        //}
+    } catch (e) { }
 }
 
 // Форма создания транзакции
@@ -752,7 +812,7 @@ function showEditTargetForm(accountId, accountName, oldName, oldGoal, targetId) 
             <input type="number" id="edit-target-goal" value="${oldGoal}">
 
             <button class="btn-submit" onclick="submitUpdateTarget('${targetId}', '${accountId}', '${accountName}')">Сохранить изменения</button>
-            <button onclick="showAccount('${accountId}', '${accountName}')" style="background:none; border:none; color:#888; width:100%; margin-top:10px; cursor:pointer;">Отмена</button>
+            <button onclick="showAccountTargetForm('${accountId}', '${accountName}')" style="background:none; border:none; color:#888; width:100%; margin-top:10px; cursor:pointer;">Отмена</button>
         </div>
     `;
 }
@@ -1336,16 +1396,47 @@ async function showTotalDashboard() {
         const colors = ['#0084ff', '#28a745', '#ffc107', '#17a2b8', '#6610f2'];
 
         area.innerHTML = `
-    <h1 class="mb-4">Общий капитал</h1>
+    <h1 style="margin-bottom: 20px !important;">Общий обзор</h1>
     
-    <!-- 1. ДИАГРАММА -->
-    <div class="form-card" style="margin-bottom: 25px;">
-        <h5 class="mb-3">Распределение средств (сейчас)</h5>
-        <div class="chart-container">
+    <!-- 1. ДИАГРАММА С ПРОЦЕНТАМИ И ЛЕГЕНДОЙ -->
+    <div class="form-card" style="margin-bottom: 25px; padding: 20px; border-radius: 15px;">
+        <h5 class="mb-3" style="font-weight: bold; color: #2d3748;">Распределение средств (сейчас)</h5>
+
+        <div class="chart-container" style="height: 40px; display: flex; border-radius: 10px; overflow: hidden; background: #f0f2f5; margin-bottom: 20px;">
             ${accounts.map((acc, i) => {
-            const share = totalSum > 0 ? (acc.total / totalSum) * 100 : 0;
-            return share > 0 ? `<div class="chart-segment" style="width:${share}%; background:${colors[i % colors.length]}" title="${acc.name}"></div>` : '';
-        }).join('')}
+                const share = totalSum > 0 ? (acc.total / totalSum) * 100 : 0;
+                if (share <= 0) return '';
+
+                return `
+                    <div class="chart-segment" 
+                         style="
+                            width: ${share}%; 
+                            background: ${colors[i % colors.length]}; 
+                            display: flex; 
+                            align-items: center; 
+                            justify-content: center; 
+                            color: white; 
+                            font-size: 0.75rem; 
+                            font-weight: bold;
+                            white-space: nowrap;
+                            overflow: hidden;
+                            transition: width 0.6s ease;
+                         " 
+                         title="${acc.name}: ${Math.round(share)}%">
+                        ${share > 7 ? Math.round(share) + '%' : ''} 
+                    </div>`;
+            }).join('')}
+        </div>
+        
+        <!-- ВОЗВРАЩАЕМ ЛЕГЕНДУ -->
+        <div style="display: flex; flex-wrap: wrap; gap: 15px;">
+            ${accounts.filter(a => a.total > 0).map((acc, i) => `
+                <div style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem;">
+                    <div style="width: 12px; height: 12px; border-radius: 3px; background: ${colors[i % colors.length]};"></div>
+                    <span style="color: #65676b;">${acc.name}:</span>
+                    <span style="font-weight: bold; color: #2d3748;">${acc.total.toLocaleString()} ₽</span>
+                </div>
+            `).join('')}
         </div>
     </div>
 
