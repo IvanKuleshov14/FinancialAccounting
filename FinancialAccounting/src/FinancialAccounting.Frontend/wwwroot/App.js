@@ -117,11 +117,6 @@ async function showAccount(id, name) {
         ${currentFilterType === 0 ? 'История операций' : currentFilterType === 1 ? 'Только доходы' : 'Только расходы'}
     </h4>
     <div style="display: flex !important; gap: 10px !important; align-items: center !important;">
-        <select class="select-inline" onchange="changeAccountFilter('${id}', '${name}', null, null, this.value)" 
-                style="height: 38px !important; border-radius: 8px !important; width: 140px !important; margin: 0 !important; box-sizing: border-box !important;">
-            <option value="all">Все категории</option>
-            ${categories.map(c => `<option value="${c.name || c.Name}" ${currentFilterCategory === (c.name || c.Name) ? 'selected' : ''}>${c.name || c.Name}</option>`).join('')}
-        </select>
         <select class="select-inline" onchange="changeAccountFilter('${id}', '${name}', this.value, null, null)" 
                 style="height: 38px !important; border-radius: 8px !important; margin: 0 !important; box-sizing: border-box !important;">
             <option value="-1" ${currentFilterMonth === -1 ? 'selected' : ''}>Все месяцы</option>
@@ -132,13 +127,18 @@ async function showAccount(id, name) {
             <option value="2025" ${currentFilterYear === 2025 ? 'selected' : ''}>2025</option>
             <option value="2026" ${currentFilterYear === 2026 ? 'selected' : ''}>2026</option>
         </select>
+        <select class="select-inline" onchange="changeAccountFilter('${id}', '${name}', null, null, this.value)" 
+                style="height: 38px !important; border-radius: 8px !important; width: 140px !important; margin: 0 !important; box-sizing: border-box !important;">
+            <option value="all">Все категории</option>
+            ${categories.map(c => `<option value="${c.name || c.Name}" ${currentFilterCategory === (c.name || c.Name) ? 'selected' : ''}>${c.name || c.Name}</option>`).join('')}
+        </select>
     </div>
 </div>
 
             <div id="transactions-list">
                 ${filteredTxs.length > 0 ? filteredTxs.map(t => {
             const isTransfer = t.relatedTransactionId !== null;
-            const title = isTransfer ? (t.type === 2 ? '⇄ Перевод (Расход)' : '⇄ Перевод (Зачисление)') : (t.categoryName || 'Без категории');
+                    const title = isTransfer ? (t.type === 2 ? '⇄ Между своими счетами' : '⇄ Между своими счетами') : (t.categoryName || 'Без категории');
             return `
                         <div class="tr-item">
                             <button class="btn-delete" onclick="deleteTransaction('${t.id}', '${id}', '${name}')">&times;</button>
