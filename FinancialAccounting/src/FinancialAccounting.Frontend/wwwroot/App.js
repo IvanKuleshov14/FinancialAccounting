@@ -227,11 +227,13 @@ async function saveTransaction(accountId, accountName) { // Добавили acc
         // ВАЖНО: Мы вызываем возврат в обоих случаях, если транзакция прошла
         if (res.ok) {
             await loadAccounts();
+            await loadTotalBalance();
             showAccount(accountId, accountName); // Возвращаемся, используя переданное имя
         }
     } catch (e) {
         // Если была ошибка сети (CORS), но данные ушли
         await loadAccounts();
+        await loadTotalBalance();
         showAccount(accountId, accountName);
     }
 }
@@ -293,6 +295,7 @@ async function submitTransfer(fromId, fromName) {
 
         if (res.ok) {
             await loadAccounts();
+            await loadTotalBalance();
             showAccount(fromId, fromName);
         } else {
             const err = await res.text();
@@ -301,6 +304,7 @@ async function submitTransfer(fromId, fromName) {
     } catch (e) {
         // Обработка CORS если нужно
         await loadAccounts();
+        await loadTotalBalance();
         showAccount(fromId, fromName);
     }
 }
@@ -317,6 +321,7 @@ async function deleteTransaction(transactionId, accountId, accountName) {
         if (res.ok) {
             // Обновляем всё: и баланс в сайдбаре, и список транзакций
             await loadAccounts();
+            await loadTotalBalance();
             showAccount(accountId, accountName);
         } else {
             const err = await res.text();
@@ -326,6 +331,7 @@ async function deleteTransaction(transactionId, accountId, accountName) {
         // Обработка CORS или ошибок сети (как в сохранении)
         console.error(e);
         await loadAccounts();
+        await loadTotalBalance();
         showAccount(accountId, accountName);
     }
 }
@@ -373,6 +379,7 @@ async function saveAccountName(id) {
 
         if (res.ok) {
             await loadAccounts(); // Обновляем сайдбар
+            await loadTotalBalance();
             showAccount(id, newName); // Обновляем заголовок
         } else {
             alert("Ошибка при обновлении имени");
@@ -381,6 +388,7 @@ async function saveAccountName(id) {
         console.error(e);
         // Обработка CORS если нужно
         await loadAccounts();
+        await loadTotalBalance();
         showAccount(id, newName);
     }
 }
@@ -414,6 +422,7 @@ async function deleteAccount(id) {
 
         if (res.ok) {
             await loadAccounts(); // Обновляем сайдбар
+            await loadTotalBalance();
             document.getElementById('details-area').innerHTML = `
                 <div style="text-align: center; color: #888; margin-top: 100px;">
                     <h2>Счет удален</h2>
@@ -425,6 +434,7 @@ async function deleteAccount(id) {
     } catch (e) {
         console.error(e);
         await loadAccounts();
+        await loadTotalBalance();
         // Если перенаправление на главную после удаления
         location.reload();
     }
@@ -475,10 +485,12 @@ async function submitCreateAccount() {
             try {
                 const createdAccount = await res.json();
                 await loadAccounts();
+                await loadTotalBalance();
                 showAccount(createdAccount.id, createdAccount.name);
             } catch {
                 // Если контроллер вернул успех, но без тела (пустой Ok)
                 await loadAccounts();
+                await loadTotalBalance();
                 document.getElementById('details-area').innerHTML = "<h2>Счет создан</h2>";
             }
         } else {
@@ -488,6 +500,7 @@ async function submitCreateAccount() {
     } catch (e) {
         console.error(e);
         await loadAccounts();
+        await loadTotalBalance();
     }
 }
 
@@ -611,6 +624,7 @@ async function submitAccountTarget(accountId, accountName) {
 
         if (res.ok) {
             await loadAccounts(); // Обновит прогресс-бар в сайдбаре
+            await loadTotalBalance();
             showAccount(accountId, accountName);
         } else {
             alert("Ошибка при установке цели");
@@ -618,6 +632,7 @@ async function submitAccountTarget(accountId, accountName) {
     } catch (e) {
         console.error(e);
         await loadAccounts();
+        await loadTotalBalance();
         showAccount(accountId, accountName);
     }
 }
@@ -633,6 +648,7 @@ async function deleteAccountTarget(targetId, accountId, accountName) {
 
         if (res.ok) {
             await loadAccounts(); // Чтобы убрать бар из сайдбара
+            await loadTotalBalance();
             showAccount(accountId, accountName); // Возвращаемся в детали счета
         } else {
             alert("Ошибка при удалении цели с сервера");
@@ -641,6 +657,7 @@ async function deleteAccountTarget(targetId, accountId, accountName) {
         console.error(e);
         // Fallback для CORS
         await loadAccounts();
+        await loadTotalBalance();
         showAccount(accountId, accountName);
     }
 }
@@ -760,6 +777,7 @@ async function submitUpdateTarget(targetId, accountId, accountName) {
 
         if (res.ok) {
             await loadAccounts(); // Чтобы обновился сайдбар
+            await loadTotalBalance();
             showAccount(accountId, accountName); // Возвращаемся в счет
         } else {
             alert("Ошибка при обновлении цели");
@@ -767,6 +785,7 @@ async function submitUpdateTarget(targetId, accountId, accountName) {
     } catch (e) {
         console.error(e);
         await loadAccounts();
+        await loadTotalBalance();
         showAccount(accountId, accountName);
     }
 }
@@ -1262,6 +1281,30 @@ async function loadTargetTransactions(targetId) {
         list.innerHTML = "Ошибка загрузки истории";
     }
 }
+
+async function loadTotalBalance() {
+    try {
+        const res = await fetch(`${API_URL}/Accounts`);
+        const accounts = await res.json();
+
+        // Считаем сумму только обычных счетов
+        const totalSum = accounts.reduce((sum, acc) => sum + (acc.total || 0), 0);
+
+        const container = document.getElementById('total-balance-container');
+        container.innerHTML = `
+            <div class="card total-balance-card" onclick="showTotalDashboard()">
+                <div style="font-size: 0.8rem; opacity: 0.8; text-transform: uppercase; letter-spacing: 1px;">Общий капитал</div>
+                <div style="font-size: 1.5rem; font-weight: 800; margin-top: 5px;">
+                    ${totalSum.toLocaleString()} ₽
+                </div>
+            </div>
+        `;
+    } catch (e) {
+        console.error("Ошибка загрузки общего баланса:", e);
+    }
+}
+
+loadTotalBalance();
 
 // Вызови эту функцию в самом конце app.js, чтобы она работала при старте
 loadTargets();

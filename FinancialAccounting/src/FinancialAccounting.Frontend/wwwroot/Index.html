@@ -582,12 +582,32 @@
             background-color: #f8f9fa;
             border-color: #ddd;
         }
+
+        .total-balance-card {
+            background: linear-gradient(135deg, #0084ff, #0056b3) !important;
+            color: white !important;
+            border: none !important;
+            margin-bottom: 20px !important;
+            padding: 20px !important;
+        }
+
+            .total-balance-card .balance {
+                color: white !important;
+                font-size: 1.4rem;
+            }
+
+            .total-balance-card:hover {
+                transform: scale(1.02);
+                box-shadow: 0 4px 15px rgba(0, 132, 255, 0.3) !important;
+            }
     </style>
 </head>
 <body>
     <div class="app-wrapper">
         <aside id="sidebar">
             <h2 style="font-size: 1.2rem; margin-bottom: 20px;">Мои финансы</h2>
+
+            <div id="total-balance-container"></div>
 
             <div class="section-header">
                 <div class="section-title" style="margin:0;">Счета</div>
