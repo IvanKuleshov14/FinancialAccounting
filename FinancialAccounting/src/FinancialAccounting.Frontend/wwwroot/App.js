@@ -6,6 +6,13 @@ async function loadAccounts() {
     const data = await res.json();
     const list = document.getElementById('accounts-list');
 
+    list.innerHTML = '';
+
+    if (data.length === 0) {
+        list.innerHTML = '<div style="color:#bbb; font-size:0.8rem; text-align:center;">Пока нет счетов</div>';
+        return;
+    }
+
     list.innerHTML = data.map(acc => {
         // Используем TargetProgress напрямую из твоего DTO
         const progressValue = acc.targetProgress || 0;
@@ -36,63 +43,146 @@ async function loadAccounts() {
 // Показ истории транзакций
 async function showAccount(id, name) {
     const area = document.getElementById('details-area');
-    area.innerHTML = `
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
-        <div id="account-title-container">
-            <h1 style="display:inline-block;">${name}</h1>
-            <button class="btn-edit" onclick="enableEditAccount('${id}', '${name}')">✎</button>
-            <div id="account-target-badge"></div> <!-- Место для названия цели -->
-        </div>
-        <div style="display:flex; gap:10px;">
-            <button class="btn-submit" style="background:#6c757d; width:auto; padding:10px 20px;" onclick="showAccountTargetForm('${id}', '${name}')">🎯 Цель</button>
-            <button class="btn-submit" style="background:#6c757d; width:auto; padding:10px 20px;" onclick="showTransferForm('${id}', '${name}')">⇄ Перевод</button>
-            <button class="btn-submit" style="width:auto; padding:10px 20px;" onclick="showForm('${id}', '${name}')">+ Операция</button>
-            <div class="dropdown">
-                 <button class="btn-more" onclick="toggleAccountMenu()">⋮</button>
-                 <div id="account-dropdown" class="dropdown-content">
-                    <button onclick="deleteAccount('${id}')">🗑 Удалить счет</button>
-                 </div>
+    area.innerHTML = '<div style="text-align:center; margin-top:50px;">Загрузка...</div>';
+
+    try {
+        // 1. Подгружаем категории по текущему типу для этого счета
+        let catUrl = `${API_URL}/Categories`;
+        if (currentFilterType !== 0) catUrl += `?type=${currentFilterType}`;
+
+        const [accRes, txRes, catRes] = await Promise.all([
+            fetch(`${API_URL}/Accounts/${id}`),
+            fetch(`${API_URL}/transactions/${id}?page=1&limit=500`),
+            fetch(catUrl)
+        ]);
+
+        const accData = await accRes.json();
+        const allTxs = await txRes.json();
+        const categories = await catRes.json();
+
+        // 2. Считаем статистику за выбранный период (для карточек)
+        const periodTxs = allTxs.filter(t => {
+            const d = new Date(t.createdTime);
+            const m = currentFilterMonth === -1 || d.getMonth() === currentFilterMonth;
+            const y = d.getFullYear() === currentFilterYear;
+            return m && y;
+        });
+
+        const incomeSum = periodTxs.filter(t => t.type === 1).reduce((sum, t) => sum + t.value, 0);
+        const expenseSum = periodTxs.filter(t => t.type === 2).reduce((sum, t) => sum + t.value, 0);
+
+        // 3. Фильтруем список транзакций (учитываем тип и категорию)
+        const filteredTxs = periodTxs.filter(t => {
+            const tMatch = currentFilterType === 0 || t.type === currentFilterType;
+            const cMatch = currentFilterCategory === "all" || t.categoryName === currentFilterCategory;
+            return tMatch && cMatch;
+        });
+
+        area.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
+                <div id="account-title-container" style="display: flex; align-items: center; gap: 10px;">
+                    <h1 style="margin:0;">${name}</h1>
+                    <button class="btn-edit" onclick="enableEditAccount('${id}', '${name}')">✎</button>
+                </div>
+                <div style="display:flex; gap:10px; align-items: center;">
+                    <button class="btn-submit" style="background:#6c757d; width:auto; padding:10px 20px;" onclick="showAccountTargetForm('${id}', '${name}')">🎯 Цель</button>
+                    <button class="btn-submit" style="background:#6c757d; width:auto; padding:10px 20px;" onclick="showTransferForm('${id}', '${name}')">⇄ Перевод</button>
+                    <button class="btn-submit" style="background:#28a745; width:auto; padding:10px 20px;" onclick="showForm('${id}', '${name}')">+ Операция</button>
+                    <div class="dropdown">
+                        <button class="btn-more" onclick="toggleAccountMenu()">⋮</button>
+                        <div id="account-dropdown" class="dropdown-content">
+                            <button onclick="deleteAccount('${id}')">🗑 Удалить счет</button>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
+
+            <!-- КЛИКАБЕЛЬНЫЕ КАРТОЧКИ СЧЕТА -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 30px;">
+                <div class="form-card" onclick="toggleAccountTypeFilter('${id}', '${name}', 1)" 
+                     style="border-left: 5px solid #28a745; cursor: pointer; border: ${currentFilterType === 1 ? '2px solid #28a745' : '1px solid #eee'}; background: ${currentFilterType === 1 ? '#f1fdf7' : 'white'}; padding: 15px; margin:0;">
+                    <small style="color:#888; text-transform:uppercase; font-size:0.7rem;">Доходы ${currentFilterType === 1 ? '●' : ''}</small>
+                    <div style="font-size: 1.3rem; font-weight: bold; color: #28a745;">+${incomeSum.toLocaleString()} ₽</div>
+                </div>
+                <div class="form-card" onclick="toggleAccountTypeFilter('${id}', '${name}', 2)" 
+                     style="border-left: 5px solid #dc3545; cursor: pointer; border: ${currentFilterType === 2 ? '2px solid #dc3545' : '1px solid #eee'}; background: ${currentFilterType === 2 ? '#fff5f5' : 'white'}; padding: 15px; margin:0;">
+                    <small style="color:#888; text-transform:uppercase; font-size:0.7rem;">Расходы ${currentFilterType === 2 ? '●' : ''}</small>
+                    <div style="font-size: 1.3rem; font-weight: bold; color: #dc3545;">-${expenseSum.toLocaleString()} ₽</div>
+                </div>
+            </div>
+
+            <!-- ФИЛЬТРЫ В РЯД -->
+            <div style="display: flex !important; justify-content: space-between !important; align-items: center !important; margin: 25px 0 15px 0 !important; width: 100% !important; min-height: 40px !important;">
+    <h4 style="margin: 0 !important; font-size: 1.1rem; white-space: nowrap !important; display: flex !important; align-items: center !important;">
+        ${currentFilterType === 0 ? 'История операций' : currentFilterType === 1 ? 'Только доходы' : 'Только расходы'}
+    </h4>
+    <div style="display: flex !important; gap: 10px !important; align-items: center !important;">
+        <select class="select-inline" onchange="changeAccountFilter('${id}', '${name}', this.value, null, null)" 
+                style="height: 38px !important; border-radius: 8px !important; margin: 0 !important; box-sizing: border-box !important;">
+            <option value="-1" ${currentFilterMonth === -1 ? 'selected' : ''}>Все месяцы</option>
+            ${['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'].map((m, i) => `<option value="${i}" ${i === currentFilterMonth ? 'selected' : ''}>${m}</option>`).join('')}
+        </select>
+        <select class="select-inline" onchange="changeAccountFilter('${id}', '${name}', null, this.value, null)" 
+                style="height: 38px !important; border-radius: 8px !important; margin: 0 !important; box-sizing: border-box !important;">
+            <option value="2025" ${currentFilterYear === 2025 ? 'selected' : ''}>2025</option>
+            <option value="2026" ${currentFilterYear === 2026 ? 'selected' : ''}>2026</option>
+        </select>
+        <select class="select-inline" onchange="changeAccountFilter('${id}', '${name}', null, null, this.value)" 
+                style="height: 38px !important; border-radius: 8px !important; width: 140px !important; margin: 0 !important; box-sizing: border-box !important;">
+            <option value="all">Все категории</option>
+            ${categories.map(c => `<option value="${c.name || c.Name}" ${currentFilterCategory === (c.name || c.Name) ? 'selected' : ''}>${c.name || c.Name}</option>`).join('')}
+        </select>
     </div>
-    <div id="transactions-list">Загрузка...</div>
-`;
+</div>
 
-    const res = await fetch(`${API_URL}/transactions/${id}?page=1&limit=20`);
-    const txs = await res.json();
+            <div id="transactions-list">
+                ${filteredTxs.length > 0 ? filteredTxs.map(t => {
+            const isTransfer = t.relatedTransactionId !== null;
+                    const title = isTransfer ? (t.type === 2 ? '⇄ Между своими счетами' : '⇄ Между своими счетами') : (t.categoryName || 'Без категории');
+            return `
+                        <div class="tr-item">
+                            <button class="btn-delete" onclick="deleteTransaction('${t.id}', '${id}', '${name}')">&times;</button>
+                            <div class="tr-info">
+                                <strong>${title}</strong>
+                                <span class="tr-desc">${t.description || ''}</span>
+                                <small style="color: #bcc0c4;">${new Date(t.createdTime).toLocaleDateString()}</small>
+                            </div>
+                            <span class="${t.type === 2 ? 'tr-amount-neg' : 'tr-amount-pos'}">
+                                ${t.type === 2 ? '-' : '+'}${t.value.toLocaleString()} ₽
+                            </span>
+                        </div>`;
+        }).join('') : '<p class="text-center text-muted p-5">Транзакций не найдено</p>'}
+            </div>
+        `;
 
-    document.getElementById('transactions-list').innerHTML = txs.map(t => {
-        // 1. Проверяем, перевод это или нет
-        const isTransfer = t.relatedTransactionId !== null;
+    } catch (e) { console.error(e); area.innerHTML = "<h2>Ошибка загрузки счета</h2>"; }
+}
 
-        // 2. Определяем заголовок: Категория или спец-текст для перевода
-        let displayTitle = t.categoryName || 'Без категории';
-        if (isTransfer) {
-            displayTitle = t.type === 2 ? '⇄ Перевод на другой счет' : '⇄ Перевод с другого счета';
-        }
+// Вспомогательная функция (обязательно добавь её в app.js)
+function changeAccountFilter(id, name, month, year, category) {
+    if (month !== null) currentFilterMonth = parseInt(month);
+    if (year !== null) currentFilterYear = parseInt(year);
+    if (category !== null) currentFilterCategory = category;
+    showAccount(id, name);
+}
 
-        // 3. Классы для суммы (Type 2 - Расход, Type 1 - Доход)
-        const amountClass = t.type === 2 ? 'tr-amount-neg' : 'tr-amount-pos';
-        const sign = t.type === 2 ? '-' : '+';
+// Фильтр через клик по карточкам
+function toggleAccountTypeFilter(id, name, type) {
+    currentFilterType = (currentFilterType === type) ? 0 : type;
+    currentFilterCategory = "all"; // Сбрасываем категорию при смене типа
+    showAccount(id, name);
+}
 
-        return `
-    <div class="tr-item">
-        <button class="btn-delete" onclick="deleteTransaction('${t.id}', '${id}', '${name}')">&times;</button>
-        
-        <div class="tr-info">
-            <strong>${displayTitle}</strong>
-            <!-- Описание: если это перевод и оно пустое, можно вывести что-то по умолчанию -->
-            <span class="tr-desc">${t.description || (isTransfer ? 'Внутренняя операция' : '')}</span>
-            <small style="color: #bcc0c4; font-size: 0.75rem;">
-                ${new Date(t.createdTime).toLocaleDateString()}
-            </small>
-        </div>
-        <span class="${amountClass}">
-            ${sign}${t.value.toLocaleString()} ₽
-        </span>
-    </div>
-    `;
-    }).join('');
+// Вспомогательная функция для баджа (вынесли для чистоты)
+async function updateTargetBadge(id) {
+    try {
+        const res = await fetch(`${API_URL}/Accounts/${id}`);
+        const acc = await res.json();
+        const badge = document.getElementById('account-target-badge');
+        //if (acc.targetName && badge) {
+        //    badge.innerHTML = `<div style="font-size: 0.9rem; color: #65676b; margin-top: 5px;">🎯 Цель: <strong>${acc.targetName}</strong> (${Math.round(acc.targetProgress)}%)</div>`;
+        //}
+    } catch (e) { }
 }
 
 // Форма создания транзакции
@@ -220,11 +310,13 @@ async function saveTransaction(accountId, accountName) { // Добавили acc
         // ВАЖНО: Мы вызываем возврат в обоих случаях, если транзакция прошла
         if (res.ok) {
             await loadAccounts();
+            await loadTotalBalance();
             showAccount(accountId, accountName); // Возвращаемся, используя переданное имя
         }
     } catch (e) {
         // Если была ошибка сети (CORS), но данные ушли
         await loadAccounts();
+        await loadTotalBalance();
         showAccount(accountId, accountName);
     }
 }
@@ -286,6 +378,7 @@ async function submitTransfer(fromId, fromName) {
 
         if (res.ok) {
             await loadAccounts();
+            await loadTotalBalance();
             showAccount(fromId, fromName);
         } else {
             const err = await res.text();
@@ -294,6 +387,7 @@ async function submitTransfer(fromId, fromName) {
     } catch (e) {
         // Обработка CORS если нужно
         await loadAccounts();
+        await loadTotalBalance();
         showAccount(fromId, fromName);
     }
 }
@@ -310,6 +404,7 @@ async function deleteTransaction(transactionId, accountId, accountName) {
         if (res.ok) {
             // Обновляем всё: и баланс в сайдбаре, и список транзакций
             await loadAccounts();
+            await loadTotalBalance();
             showAccount(accountId, accountName);
         } else {
             const err = await res.text();
@@ -319,6 +414,7 @@ async function deleteTransaction(transactionId, accountId, accountName) {
         // Обработка CORS или ошибок сети (как в сохранении)
         console.error(e);
         await loadAccounts();
+        await loadTotalBalance();
         showAccount(accountId, accountName);
     }
 }
@@ -366,6 +462,7 @@ async function saveAccountName(id) {
 
         if (res.ok) {
             await loadAccounts(); // Обновляем сайдбар
+            await loadTotalBalance();
             showAccount(id, newName); // Обновляем заголовок
         } else {
             alert("Ошибка при обновлении имени");
@@ -374,6 +471,7 @@ async function saveAccountName(id) {
         console.error(e);
         // Обработка CORS если нужно
         await loadAccounts();
+        await loadTotalBalance();
         showAccount(id, newName);
     }
 }
@@ -407,6 +505,7 @@ async function deleteAccount(id) {
 
         if (res.ok) {
             await loadAccounts(); // Обновляем сайдбар
+            await loadTotalBalance();
             document.getElementById('details-area').innerHTML = `
                 <div style="text-align: center; color: #888; margin-top: 100px;">
                     <h2>Счет удален</h2>
@@ -418,6 +517,7 @@ async function deleteAccount(id) {
     } catch (e) {
         console.error(e);
         await loadAccounts();
+        await loadTotalBalance();
         // Если перенаправление на главную после удаления
         location.reload();
     }
@@ -468,10 +568,12 @@ async function submitCreateAccount() {
             try {
                 const createdAccount = await res.json();
                 await loadAccounts();
+                await loadTotalBalance();
                 showAccount(createdAccount.id, createdAccount.name);
             } catch {
                 // Если контроллер вернул успех, но без тела (пустой Ok)
                 await loadAccounts();
+                await loadTotalBalance();
                 document.getElementById('details-area').innerHTML = "<h2>Счет создан</h2>";
             }
         } else {
@@ -481,6 +583,7 @@ async function submitCreateAccount() {
     } catch (e) {
         console.error(e);
         await loadAccounts();
+        await loadTotalBalance();
     }
 }
 
@@ -604,6 +707,7 @@ async function submitAccountTarget(accountId, accountName) {
 
         if (res.ok) {
             await loadAccounts(); // Обновит прогресс-бар в сайдбаре
+            await loadTotalBalance();
             showAccount(accountId, accountName);
         } else {
             alert("Ошибка при установке цели");
@@ -611,6 +715,7 @@ async function submitAccountTarget(accountId, accountName) {
     } catch (e) {
         console.error(e);
         await loadAccounts();
+        await loadTotalBalance();
         showAccount(accountId, accountName);
     }
 }
@@ -626,6 +731,7 @@ async function deleteAccountTarget(targetId, accountId, accountName) {
 
         if (res.ok) {
             await loadAccounts(); // Чтобы убрать бар из сайдбара
+            await loadTotalBalance();
             showAccount(accountId, accountName); // Возвращаемся в детали счета
         } else {
             alert("Ошибка при удалении цели с сервера");
@@ -634,6 +740,7 @@ async function deleteAccountTarget(targetId, accountId, accountName) {
         console.error(e);
         // Fallback для CORS
         await loadAccounts();
+        await loadTotalBalance();
         showAccount(accountId, accountName);
     }
 }
@@ -728,7 +835,7 @@ function showEditTargetForm(accountId, accountName, oldName, oldGoal, targetId) 
             <input type="number" id="edit-target-goal" value="${oldGoal}">
 
             <button class="btn-submit" onclick="submitUpdateTarget('${targetId}', '${accountId}', '${accountName}')">Сохранить изменения</button>
-            <button onclick="showAccount('${accountId}', '${accountName}')" style="background:none; border:none; color:#888; width:100%; margin-top:10px; cursor:pointer;">Отмена</button>
+            <button onclick="showAccountTargetForm('${accountId}', '${accountName}')" style="background:none; border:none; color:#888; width:100%; margin-top:10px; cursor:pointer;">Отмена</button>
         </div>
     `;
 }
@@ -753,6 +860,7 @@ async function submitUpdateTarget(targetId, accountId, accountName) {
 
         if (res.ok) {
             await loadAccounts(); // Чтобы обновился сайдбар
+            await loadTotalBalance();
             showAccount(accountId, accountName); // Возвращаемся в счет
         } else {
             alert("Ошибка при обновлении цели");
@@ -760,6 +868,7 @@ async function submitUpdateTarget(targetId, accountId, accountName) {
     } catch (e) {
         console.error(e);
         await loadAccounts();
+        await loadTotalBalance();
         showAccount(accountId, accountName);
     }
 }
@@ -824,6 +933,613 @@ async function deleteCurrentCategoryConfirm(categoryId, accountId, accountName) 
         }
     } catch (e) { console.error(e); showForm(accountId, accountName); }
 }
+
+async function loadTargets() {
+    try {
+        const res = await fetch(`${API_URL}/Targets`);
+        const targets = await res.json();
+        const list = document.getElementById('targets-list');
+
+        // Очищаем список перед загрузкой
+        list.innerHTML = '';
+
+        if (targets.length === 0) {
+            list.innerHTML = '<div style="color:#bbb; font-size:0.8rem; text-align:center;">Пока нет целей</div>';
+            return;
+        }
+
+        list.innerHTML = targets.map(t => {
+            // Используем Progress из твоего DTO (предполагаем, что это проценты 0-100)
+            const progressValue = t.progress ?? 0;
+            const barWidth = Math.min(progressValue, 100);
+
+            return `
+                <div class="card" onclick="showTargetDetails('${t.id}', '${t.name}')">
+                    <div class="card-header">
+                        <span style="font-weight: 500;">${t.name}</span>
+                        <span style="color: #28a745; font-weight: bold;">${t.total.toLocaleString()} ₽</span>
+                    </div>
+                    
+                    <div class="progress-container" style="height: 6px; margin-top: 10px;">
+                        <div class="progress-bar" style="width: ${barWidth}%; background: #28a745;"></div>
+                    </div>
+                    
+                    <div class="target-info" style="margin-top: 5px;">
+                        <span style="font-size: 0.7rem; color: #888;">Цель: ${t.goal.toLocaleString()} ₽</span>
+                        <span style="font-size: 0.7rem; font-weight: bold;">${Math.round(progressValue)}%</span>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    } catch (e) {
+        console.error("Ошибка загрузки автономных целей:", e);
+    }
+}
+
+async function showTargetDetails(id, name) {
+    const area = document.getElementById('details-area');
+    area.innerHTML = '<div class="text-center mt-5">Обработка...</div>';
+
+    try {
+        const res = await fetch(`${API_URL}/Targets/${id}`);
+        if (!res.ok) throw new Error(`Ошибка сервера: ${res.status}`);
+
+        const target = await res.json();
+        console.log("Пришли данные:", target); // Проверь это в консоли F12!
+
+        // Безопасное извлечение полей (пробуем и маленькую, и большую буквы)
+        const tId = target.id || target.Id || id;
+        const tName = target.name || target.Name || name;
+        const tTotal = target.total ?? target.Total ?? 0;
+        const tGoal = target.goal ?? target.Goal ?? 0;
+        const tProgress = target.progress ?? target.Progress ?? 0;
+
+        const percent = Math.min(Math.round(tProgress), 100);
+
+        area.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
+                <h1 style="margin:0;">${tName}</h1>
+                <div style="display:flex; gap:10px;">
+    <!-- Кнопка пополнения (пока заглушка) -->
+   <button class="btn-submit" style="background:#28a745; width:auto; padding:10px 20px;"
+    onclick="openDepositTargetForm('${tId}', '${tName}')">+ Операция</button>
+
+    <!-- Кнопка РЕДАКТИРОВАНИЯ: передаем ID, текущее имя и цель -->
+    <button class="btn-inline-add"
+            onclick="showEditAutonomousTargetForm('${tId}', '${tName}', ${tGoal})" 
+            style="background: #f0f2f5; color: #65676b; border: 1px solid #ddd; width: 45px; height: 45px;" 
+            title="Редактировать">✎</button>
+            
+    <!-- Кнопка УДАЛЕНИЯ -->
+    <button class="btn-inline-del" onclick="deleteTarget('${tId}')" style="margin:0; width: 45px; height: 45px;">🗑</button>
+</div>
+            </div>
+
+            <div class="form-card" style="border-top: 5px solid #28a745; margin-bottom: 30px; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+                <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:15px;">
+                    <div>
+                        <small style="color:#888; text-transform:uppercase;">Накоплено</small>
+                        <div style="font-size: 2rem; font-weight: 800; color: #28a745;">${Number(tTotal).toLocaleString()} ₽</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <small style="color:#888; text-transform:uppercase;">Цель</small>
+                        <div style="font-size: 1.2rem; font-weight: 600;">${Number(tGoal).toLocaleString()} ₽</div>
+                    </div>
+                </div>
+
+                <div style="width: 100%; height: 16px; background:#e9ecef; border-radius: 10px; overflow: hidden;">
+                    <div style="width: ${percent}%; height: 100%; background: #28a745; transition: width 0.5s;"></div>
+                </div>
+                <div style="text-align:center; margin-top:10px; font-weight:bold; color:#28a745;">${percent}% завершено</div>
+            </div>
+
+            <div class="section-title" style="margin-top: 40px; color: #65676b; font-size: 0.9rem; text-transform: uppercase;">История пополнений</div>
+            <div id="target-history-list">
+                <!-- Здесь будет список транзакций -->
+            </div>
+        `;
+
+        // Загружаем транзакции для этой цели
+        loadTargetTransactions(tId);
+
+    } catch (err) {
+        console.error("Ошибка в блоке отрисовки:", err);
+        area.innerHTML = `
+            <div style="padding: 20px; border: 1px solid #ffc1c1; background: #fff5f5; border-radius: 10px; color: #dc3545;">
+                <h4>Ошибка отрисовки</h4>
+                <p>${err.message}</p>
+                <small>Проверь консоль браузера (F12) для деталей.</small>
+            </div>`;
+    }
+}
+
+function showCreateTargetForm() {
+    const area = document.getElementById('details-area');
+    area.innerHTML = `
+        <div class="form-card">
+            <h2 style="text-align:center; margin-bottom:20px;">Новая копилка</h2>
+            
+            <label class="section-title">На что копим?</label>
+            <input type="text" id="target-name" placeholder="Например: Подушка безопасности" autofocus>
+
+            <label class="section-title">Сколько уже отложено (₽):</label>
+            <input type="number" id="target-total" value="0" step="0.01">
+
+            <label class="section-title">Цель (₽):</label>
+            <input type="number" id="target-goal" placeholder="100000" step="0.01">
+
+            <button class="btn-submit" onclick="submitCreateTarget()">Создать копилку</button>
+            <button onclick="location.reload()" style="background:none; border:none; color:#888; width:100%; margin-top:10px; cursor:pointer;">Отмена</button>
+        </div>
+    `;
+}
+
+async function submitCreateTarget() {
+    const nameInput = document.getElementById('target-name');
+    const goalInput = document.getElementById('target-goal');
+    // Добавим поле начальной суммы, раз DTO это позволяет
+    const totalInput = document.getElementById('target-total') || { value: 0 };
+
+    if (!nameInput.value.trim() || !goalInput.value) {
+        alert("Заполните название и сумму цели");
+        return;
+    }
+
+    const payload = {
+        userId: "3fa85f64-5717-4562-b3fc-2c963f66afa6", // Твой системный Guid
+        name: nameInput.value.trim(),
+        total: parseFloat(totalInput.value) || 0,
+        goal: parseFloat(goalInput.value)
+    };
+
+    try {
+        const res = await fetch(`${API_URL}/Targets`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+            await loadTargets(); // Обновляем список в сайдбаре
+
+            try {
+                const created = await res.json();
+                showTargetDetails(created.id, created.name);
+            } catch {
+                // Если бэкенд не вернул объект, просто выводим успех
+                document.getElementById('details-area').innerHTML = "<h3>Копилка создана!</h3>";
+            }
+        } else {
+            const err = await res.text();
+            alert("Ошибка: " + err);
+        }
+    } catch (e) {
+        console.error(e);
+        await loadTargets();
+    }
+}
+
+async function deleteTarget(id) {
+    if (!confirm("Удалить эту копилку? Все данные о накоплениях будут удалены.")) return;
+
+    try {
+        const res = await fetch(`${API_URL}/Targets/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+            await loadTargets(); // Обновить сайдбар
+            document.getElementById('details-area').innerHTML = '<div class="text-center mt-5"><h3>Копилка удалена</h3></div>';
+        }
+    } catch (e) {
+        console.error(e);
+        await loadTargets();
+    }
+}
+
+// 1. Показать форму редактирования
+function showEditAutonomousTargetForm(id, oldName, oldGoal) {
+    const area = document.getElementById('details-area');
+
+    area.innerHTML = `
+        <div class="form-card">
+            <h2 style="text-align:center; margin-bottom:20px;">Изменить копилку</h2>
+            
+            <label class="section-title">Название:</label>
+            <input type="text" id="edit-target-name" value="${oldName}" autofocus>
+
+            <label class="section-title">Сумма цели (₽):</label>
+            <input type="number" id="edit-target-goal" value="${oldGoal}" step="0.01">
+
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn-submit" style="background:#28a745;" onclick="submitUpdateAutonomousTarget('${id}')">Сохранить</button>
+                <button class="btn-submit" style="background:#6c757d;" onclick="showTargetDetails('${id}', '${oldName}')">Отмена</button>
+            </div>
+        </div>
+    `;
+}
+
+// 2. Отправка PUT запроса
+async function submitUpdateAutonomousTarget(id) {
+    const newName = document.getElementById('edit-target-name').value;
+    const newGoal = document.getElementById('edit-target-goal').value;
+
+    if (!newName || !newGoal) return alert("Заполните все поля");
+
+    const payload = {
+        name: newName,
+        goal: parseFloat(newGoal)
+    };
+
+    try {
+        const res = await fetch(`${API_URL}/Targets/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+            // 1. Обновляем список в сайдбаре (если имя изменилось)
+            await loadTargets();
+            // 2. Возвращаемся в детализацию цели
+            showTargetDetails(id, newName);
+        } else {
+            alert("Не удалось сохранить изменения");
+        }
+    } catch (e) {
+        console.error("Ошибка при обновлении цели:", e);
+        // Если CORS или мелкий сбой — всё равно пробуем обновиться
+        await loadTargets();
+        showTargetDetails(id, newName);
+    }
+}
+
+async function deleteTarget(id) {
+    // 1. Спрашиваем подтверждение (важно для удаления)
+    if (!confirm("Вы уверены, что хотите удалить эту копилку? Все данные о накоплениях будут потеряны.")) {
+        return;
+    }
+
+    try {
+        // 2. Отправляем запрос на удаление
+        const res = await fetch(`${API_URL}/Targets/${id}`, {
+            method: 'DELETE'
+        });
+
+        if (res.ok) {
+            // 3. Обновляем список копилок в левой панели
+            await loadTargets();
+
+            // 4. Очищаем центральную область
+            document.getElementById('details-area').innerHTML = `
+                <div class="text-center text-muted mt-5">
+                    <h2>Копилка удалена</h2>
+                    <p>Выберите другую цель или счет слева</p>
+                </div>
+            `;
+        } else {
+            const err = await res.text();
+            alert("Ошибка при удалении: " + err);
+        }
+    } catch (e) {
+        console.error("Ошибка удаления:", e);
+        // Если была сетевая ошибка/CORS, но в базе удалилось
+        await loadTargets();
+        document.getElementById('details-area').innerHTML = "<h2>Готово</h2>";
+    }
+}
+
+// Функция открытия формы пополнения
+function openDepositTargetForm(targetId, targetName) {
+    const area = document.getElementById('details-area');
+
+    area.innerHTML = `
+        <div class="form-card" style="border-top: 5px solid #28a745;">
+            <h2 style="text-align:center; margin-bottom:20px;">Операция с копилкой</h2>
+            <p style="text-align:center; color:#888; margin-bottom:20px;">Цель: <strong>${targetName}</strong></p>
+            
+            <!-- Выбор: Положить или Забрать -->
+            <div class="type-selector" style="margin-bottom: 30px;">
+                <input type="radio" name="depType" id="type-dep-inc" value="1" checked>
+                <label class="type-btn" for="type-dep-inc" style="border-color: #28a745; color: #28a745;">Положить</label>
+                
+                <input type="radio" name="depType" id="type-dep-exp" value="2">
+                <label class="type-btn" for="type-dep-exp" style="border-color: #dc3545; color: #dc3545;">Забрать</label>
+            </div>
+
+            <label class="section-title">Сумма (₽):</label>
+            <input type="number" id="deposit-value" placeholder="0.00" step="0.01" autofocus 
+                   style="font-size: 2.5rem; text-align: center; font-weight: 800; border: none; outline: none; width: 100%;">
+
+            <label class="section-title" style="margin-top:20px;">Описание:</label>
+            <input type="text" id="deposit-desc" placeholder="На что или откуда?">
+
+            <div style="margin-top: 30px; display: flex; gap: 10px;">
+                <button class="btn-submit" style="background:#28a745;" onclick="submitTargetDeposit('${targetId}', '${targetName}')">Подтвердить</button>
+                <button class="btn-submit" style="background:#f0f2f5; color:#888;" onclick="showTargetDetails('${targetId}', '${targetName}')">Отмена</button>
+            </div>
+        </div>
+    `;
+
+    // Смена цвета суммы при переключении типа (для визуала)
+    document.getElementById('type-dep-inc').onchange = () => document.getElementById('deposit-value').style.color = '#28a745';
+    document.getElementById('type-dep-exp').onchange = () => document.getElementById('deposit-value').style.color = '#dc3545';
+
+    // По умолчанию зеленый
+    document.getElementById('deposit-value').style.color = '#28a745';
+}
+
+async function submitTargetDeposit(targetId, targetName) {
+    const valInput = document.getElementById('deposit-value').value;
+    const descInput = document.getElementById('deposit-desc').value;
+    // Считываем выбранный тип (1 или 2)
+    const typeInput = document.querySelector('input[name="depType"]:checked').value;
+
+    if (!valInput || valInput <= 0) return alert("Введите сумму");
+
+    const payload = {
+        targetId: targetId,
+        type: parseInt(typeInput), // 1 - Пополнение, 2 - Снятие
+        value: parseFloat(valInput),
+        createdDay: new Date().toISOString().split('T')[0],
+        description: descInput || (parseInt(typeInput) === 1 ? "Пополнение" : "Снятие")
+    };
+
+    try {
+        const res = await fetch(`${API_URL}/TargetTransactions`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+            await loadTargets();
+            showTargetDetails(targetId, targetName);
+        } else {
+            const err = await res.text();
+            alert("Ошибка: " + err);
+        }
+    } catch (e) {
+        console.error(e);
+        await loadTargets();
+        showTargetDetails(targetId, targetName);
+    }
+}
+
+async function deleteTargetTransaction(transactionId, targetId, targetName) {
+    if (!confirm("Удалить эту запись из истории копилки?")) return;
+
+    try {
+        const res = await fetch(`${API_URL}/TargetTransactions/${transactionId}`, {
+            method: 'DELETE'
+        });
+
+        if (res.ok) {
+            // Обновляем прогресс в сайдбаре и на дашборде
+            await loadTargets();
+            showTargetDetails(targetId, targetName);
+        } else {
+            alert("Не удалось удалить транзакцию");
+        }
+    } catch (e) {
+        console.error(e);
+        await loadTargets();
+        showTargetDetails(targetId, targetName);
+    }
+}
+
+async function loadTargetTransactions(targetId) {
+    const list = document.getElementById('target-history-list');
+    const targetName = document.querySelector('h1').innerText; // Берем имя для обновления экрана
+
+    try {
+        const res = await fetch(`${API_URL}/TargetTransactions/${targetId}`);
+        const txs = await res.json();
+
+        if (txs.length === 0) {
+            list.innerHTML = '<div style="text-align:center; padding:30px; color:#bbb;">История пуста</div>';
+            return;
+        }
+
+        list.innerHTML = txs.map(t => {
+            const isDeposit = t.type === 1;
+            const amountClass = isDeposit ? 'tr-amount-pos' : 'tr-amount-neg';
+
+            return `
+                <div class="tr-item" style="border-left: 4px solid ${isDeposit ? '#28a745' : '#dc3545'};">
+                    <!-- КНОПКА УДАЛЕНИЯ -->
+                    <button class="btn-delete-small" 
+                        onclick="deleteTargetTransaction('${t.id}', '${targetId}', '${targetName}')" 
+                        title="Удалить запись">&times;</button>
+                    
+                    <div class="tr-info">
+                        <strong>${isDeposit ? 'Зачисление' : 'Снятие'}</strong>
+                        ${t.description ? `<span class="tr-desc">${t.description}</span>` : ''}
+                        <small style="color: #bcc0c4;">${new Date(t.createdTime).toLocaleDateString()}</small>
+                    </div>
+                    <span class="${amountClass}" style="margin-right: 25px;">
+                        ${isDeposit ? '+' : '-'}${t.value.toLocaleString()} ₽
+                    </span>
+                </div>
+            `;
+        }).join('');
+    } catch (e) {
+        list.innerHTML = "Ошибка загрузки истории";
+    }
+}
+
+async function loadTotalBalance() {
+    try {
+        const res = await fetch(`${API_URL}/Accounts`);
+        const accounts = await res.json();
+
+        // Считаем сумму только обычных счетов
+        const totalSum = accounts.reduce((sum, acc) => sum + (acc.total || 0), 0);
+
+        const container = document.getElementById('total-balance-container');
+        container.innerHTML = `
+            <div class="card total-balance-card" onclick="showTotalDashboard()">
+                <div style="font-size: 0.8rem; opacity: 0.8; text-transform: uppercase; letter-spacing: 1px;">Общий капитал</div>
+                <div style="font-size: 1.5rem; font-weight: 800; margin-top: 5px;">
+                    ${totalSum.toLocaleString()} ₽
+                </div>
+            </div>
+        `;
+    } catch (e) {
+        console.error("Ошибка загрузки общего баланса:", e);
+    }
+}
+
+let currentFilterMonth = new Date().getMonth();
+let currentFilterYear = new Date().getFullYear();
+let currentFilterCategory = "all";
+let currentFilterType = 0;
+async function showTotalDashboard() {
+    const area = document.getElementById('details-area');
+    area.innerHTML = '<div class="text-center mt-5">Анализ данных...</div>';
+
+    try {
+        // 1. Формируем URL для категорий в зависимости от типа
+        let catUrl = `${API_URL}/Categories`;
+        if (currentFilterType !== 0) catUrl += `?type=${currentFilterType}`;
+
+        // 2. Грузим всё разом
+        const [accRes, txRes, catRes] = await Promise.all([
+            fetch(`${API_URL}/Accounts`),
+            fetch(`${API_URL}/Transactions?page=1&limit=500`),
+            fetch(catUrl)
+        ]);
+
+        const accounts = await accRes.json();
+        const allTxs = await txRes.json();
+        const categories = await catRes.json();
+
+        // 3. Расчеты
+        const totalSum = accounts.reduce((sum, acc) => sum + (acc.total || 0), 0);
+        const colors = ['#0084ff', '#28a745', '#ffc107', '#17a2b8', '#6610f2'];
+
+        // Фильтруем транзакции (убираем переводы и применяем фильтры)
+        const externalTxs = allTxs.filter(t => t.relatedTransactionId === null);
+
+        // Для карточек считаем суммы только за ВЫБРАННЫЙ ПЕРИОД (без учета типа и категории)
+        const periodTxs = externalTxs.filter(t => {
+            const d = new Date(t.createdTime);
+            const m = currentFilterMonth === -1 || d.getMonth() === currentFilterMonth;
+            const y = d.getFullYear() === currentFilterYear;
+            return m && y;
+        });
+        const incomeSum = periodTxs.filter(t => t.type === 1).reduce((sum, t) => sum + t.value, 0);
+        const expenseSum = periodTxs.filter(t => t.type === 2).reduce((sum, t) => sum + t.value, 0);
+
+        // Для списка фильтруем еще и по типу/категории
+        const filteredTxs = periodTxs.filter(t => {
+            const tMatch = currentFilterType === 0 || t.type === currentFilterType;
+            const cMatch = currentFilterCategory === "all" || t.categoryName === currentFilterCategory;
+            return tMatch && cMatch;
+        });
+
+        // 4. Отрисовка
+        area.innerHTML = `
+            <h1 style="margin-bottom: 20px !important;">Общий обзор</h1>
+            
+            <!-- ДИАГРАММА -->
+            <div class="form-card" style="margin-bottom: 25px; padding: 20px; border-radius: 15px;">
+                <h5 class="mb-3" style="font-weight: bold; color: #2d3748;">Распределение средств (сейчас)</h5>
+                <div class="chart-container" style="height: 40px; display: flex; border-radius: 10px; overflow: hidden; background: #f0f2f5; margin-bottom: 20px;">
+                    ${accounts.map((acc, i) => {
+            const share = totalSum > 0 ? (acc.total / totalSum) * 100 : 0;
+            if (share <= 0) return '';
+            return `<div class="chart-segment" style="width:${share}%; background:${colors[i % colors.length]}; display:flex; align-items:center; justify-content:center; color:white; font-size:0.75rem; font-weight:bold; overflow:hidden;">${share > 7 ? Math.round(share) + '%' : ''}</div>`;
+        }).join('')}
+                </div>
+                <div style="display: flex; flex-wrap: wrap; gap: 15px;">
+                    ${accounts.filter(a => a.total > 0).map((acc, i) => `
+                        <div style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem;">
+                            <div style="width: 12px; height: 12px; border-radius: 3px; background: ${colors[i % colors.length]};"></div>
+                            <span style="color: #65676b;">${acc.name}:</span>
+                            <span style="font-weight: bold;">${acc.total.toLocaleString()} ₽</span>
+                        </div>`).join('')}
+                </div>
+            </div>
+
+            <!-- КЛИКАБЕЛЬНЫЕ КАРТОЧКИ -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px;">
+                <div class="form-card" onclick="toggleTypeFilter(1)" 
+                     style="border-left: 5px solid #28a745; cursor: pointer; border: ${currentFilterType === 1 ? '2px solid #28a745' : '1px solid #eee'}; background: ${currentFilterType === 1 ? '#f1fdf7' : 'white'}; padding: 15px; margin:0;">
+                    <small style="color:#888; text-transform:uppercase; font-size:0.7rem;">Доходы ${currentFilterType === 1 ? '●' : ''}</small>
+                    <div style="font-size: 1.3rem; font-weight: bold; color: #28a745;">+${incomeSum.toLocaleString()} ₽</div>
+                </div>
+                <div class="form-card" onclick="toggleTypeFilter(2)" 
+                     style="border-left: 5px solid #dc3545; cursor: pointer; border: ${currentFilterType === 2 ? '2px solid #dc3545' : '1px solid #eee'}; background: ${currentFilterType === 2 ? '#fff5f5' : 'white'}; padding: 15px; margin:0;">
+                    <small style="color:#888; text-transform:uppercase; font-size:0.7rem;">Расходы ${currentFilterType === 2 ? '●' : ''}</small>
+                    <div style="font-size: 1.3rem; font-weight: bold; color: #dc3545;">-${expenseSum.toLocaleString()} ₽</div>
+                </div>
+            </div>
+
+            <!-- ФИЛЬТРЫ В РЯД -->
+            <div style="display: flex !important; justify-content: space-between !important; align-items: center !important; margin-bottom: 15px !important; width: 100% !important; min-height: 40px !important;">
+
+        <!-- Заголовок: убираем все отступы и центрируем вертикально -->
+        <h4 style="margin: 0 !important; font-size: 1.1rem; display: flex !important; align-items: center !important; height: 100% !important;">
+            ${currentFilterType === 0 ? 'Все операции' : currentFilterType === 1 ? 'Только доходы' : 'Только расходы'}
+        </h4>
+
+        <div style="display: flex !important; gap: 10px !important; align-items: center !important;">
+            
+            <select class="select-inline" onchange="changeGlobalFilter(this.value, null, null)" 
+                style="height: 38px !important; border-radius: 8px !important; margin: 0 !important; box-sizing: border-box !important;">
+                <option value="-1" ${currentFilterMonth === -1 ? 'selected' : ''}>Все месяцы</option>
+                ${['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'].map((m, i) => `<option value="${i}" ${i === currentFilterMonth ? 'selected' : ''}>${m}</option>`).join('')}
+            </select>
+
+            <select class="select-inline" onchange="changeGlobalFilter(null, this.value, null)" 
+                style="height: 38px !important; border-radius: 8px !important; margin: 0 !important; box-sizing: border-box !important;">
+                <option value="2025" ${currentFilterYear === 2025 ? 'selected' : ''}>2025</option>
+                <option value="2026" ${currentFilterYear === 2026 ? 'selected' : ''}>2026</option>
+            </select>
+
+            <select class="select-inline" onchange="changeGlobalFilter(null, null, this.value)" 
+                style="height: 38px !important; border-radius: 8px !important; width: 150px !important; margin: 0 !important; box-sizing: border-box !important;">
+                <option value="all" ${currentFilterCategory === "all" ? 'selected' : ''}>Все категории</option>
+                ${categories.map(c => `<option value="${c.name || c.Name}" ${currentFilterCategory === (c.name || c.Name) ? 'selected' : ''}>${c.name || c.Name}</option>`).join('')}
+            </select>
+        </div>
+    </div>
+
+            <div id="global-transactions-list">
+                ${filteredTxs.length > 0 ? filteredTxs.map(t => `
+                    <div class="tr-item">
+                        <div class="tr-info">
+                            <strong>${t.categoryName || 'Без категории'}</strong>
+                            <div style="font-size: 0.75rem; color: #0084ff;">${t.accountName}</div>
+                            <small>${new Date(t.createdTime).toLocaleDateString()}</small>
+                        </div>
+                        <span class="${t.type === 2 ? 'tr-amount-neg' : 'tr-amount-pos'}">
+                            ${t.type === 2 ? '-' : '+'}${t.value.toLocaleString()} ₽
+                        </span>
+                    </div>`).join('') : '<p class="text-center text-muted p-5">Транзакций не найдено</p>'}
+            </div>
+        `;
+    } catch (e) { console.error("Ошибка дашборда:", e); area.innerHTML = "<h2>Ошибка загрузки данных</h2>"; }
+}
+
+// Для выпадающих списков
+function changeGlobalFilter(month, year, category) {
+    if (month !== null) currentFilterMonth = parseInt(month);
+    if (year !== null) currentFilterYear = parseInt(year);
+    if (category !== null) currentFilterCategory = category;
+    showTotalDashboard();
+}
+
+// Для кликов по карточкам Доходы/Расходы
+function toggleTypeFilter(type) {
+    currentFilterType = (currentFilterType === type) ? 0 : type;
+    currentFilterCategory = "all";
+    showTotalDashboard();
+}
+
+
+loadTotalBalance();
+
+// Вызови эту функцию в самом конце app.js, чтобы она работала при старте
+loadTargets();
 
 // Запуск
 loadAccounts();

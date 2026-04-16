@@ -8,5 +8,6 @@ namespace FinancialAccounting.Application.Targets.Interfaces
         Task Update(Guid targetId, UpdateTargetDto updateTargetDto, CancellationToken cancellationToken);
         Task Delete(Guid targetId, CancellationToken cancellationToken);
         Task<List<GetTargetDto>> GetAllTargets(CancellationToken cancellationToken);
+        Task<GetTargetDto?> GetTarget(Guid id, CancellationToken cancellationToken);
     }
 }

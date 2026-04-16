@@ -54,5 +54,20 @@ namespace FinancialAccounting.Presenters.Targets
             var result = await _targetsService.GetAllTargets(cancellationToken);
             return result;
         }
+
+        [HttpGet("{targetId:guid}")]
+        public async Task<IActionResult> GetTargetById(
+            [FromRoute] Guid targetId,
+            CancellationToken cancellationToken)
+        {
+            var result = await _targetsService.GetTarget(targetId, cancellationToken);
+
+            if (result == null)
+            {
+                return NotFound("Цель не найдена");
+            }
+
+            return Ok(result);
+        }
     }
 }
