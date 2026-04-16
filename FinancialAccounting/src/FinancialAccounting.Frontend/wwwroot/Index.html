@@ -26,12 +26,30 @@
         /* ЛЕВАЯ ПАНЕЛЬ (САЙДБАР) */
         #sidebar {
             width: 320px;
+            min-width: 320px;
             background: #fff;
             border-right: 1px solid #e0e0e0;
             padding: 20px;
+            /* ВОТ ЭТИ СТРОКИ ИСПРАВЯТ ВСЁ: */
+            height: 100vh; /* Сайдбар всегда равен высоте окна */
+            overflow-y: auto; /* Появится скролл, если счетов станет много */
             display: flex;
             flex-direction: column;
         }
+
+            /* Чтобы скроллбар выглядел аккуратно (тоненький) */
+            #sidebar::-webkit-scrollbar {
+                width: 6px;
+            }
+
+            #sidebar::-webkit-scrollbar-thumb {
+                background: #eee;
+                border-radius: 10px;
+            }
+
+                #sidebar::-webkit-scrollbar-thumb:hover {
+                    background: #ddd;
+                }
 
         .section-title {
             font-size: 0.9rem;
@@ -519,6 +537,51 @@
                 color: #dc3545;
                 transform: scale(1.2);
             }
+
+        /* Стили для формы пополнения копилки */
+        #type-dep-inc:checked + label {
+            background-color: #f1fdf7 !important;
+            border-color: #28a745 !important;
+            color: #28a745 !important;
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(40, 167, 69, 0.2);
+        }
+
+        #type-dep-exp:checked + label {
+            background-color: #fff5f5 !important;
+            border-color: #dc3545 !important;
+            color: #dc3545 !important;
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(220, 53, 69, 0.2);
+        }
+
+        /* Общий стиль для кнопок-переключателей, чтобы они выглядели кликабельно */
+        .type-btn {
+            transition: all 0.2s ease;
+            border: 2px solid #eee;
+        }
+
+        /* Подсветка для кнопки "Положить" (когда радио-кнопка выбрана) */
+        #type-dep-inc:checked + label {
+            background-color: #f1fdf7 !important; /* Нежно-зеленый фон */
+            border-color: #28a745 !important;
+            color: #28a745 !important;
+            font-weight: bold;
+        }
+
+        /* Подсветка для кнопки "Забрать" (когда радио-кнопка выбрана) */
+        #type-dep-exp:checked + label {
+            background-color: #fff5f5 !important; /* Нежно-красный фон */
+            border-color: #dc3545 !important;
+            color: #dc3545 !important;
+            font-weight: bold;
+        }
+
+        /* Эффект при наведении, чтобы было понятно, что на кнопку можно нажать */
+        .type-btn:hover {
+            background-color: #f8f9fa;
+            border-color: #ddd;
+        }
     </style>
 </head>
 <body>

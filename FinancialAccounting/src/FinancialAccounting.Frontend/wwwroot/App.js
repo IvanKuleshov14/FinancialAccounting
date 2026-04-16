@@ -6,6 +6,13 @@ async function loadAccounts() {
     const data = await res.json();
     const list = document.getElementById('accounts-list');
 
+    list.innerHTML = '';
+
+    if (data.length === 0) {
+        list.innerHTML = '<div style="color:#bbb; font-size:0.8rem; text-align:center;">Пока нет счетов</div>';
+        return;
+    }
+
     list.innerHTML = data.map(acc => {
         // Используем TargetProgress напрямую из твоего DTO
         const progressValue = acc.targetProgress || 0;
