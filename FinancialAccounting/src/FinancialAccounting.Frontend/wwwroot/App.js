@@ -46,34 +46,48 @@ async function showAccount(id, name) {
     area.innerHTML = '<div style="text-align:center; margin-top:50px;">Загрузка...</div>';
 
     try {
-        const res = await fetch(`${API_URL}/transactions/${id}?page=1&limit=500`);
-        const allTxs = await res.json();
+        // 1. Подгружаем категории по текущему типу для этого счета
+        let catUrl = `${API_URL}/Categories`;
+        if (currentFilterType !== 0) catUrl += `?type=${currentFilterType}`;
 
-        // 1. Фильтрация
-        const filteredTxs = allTxs.filter(t => {
-            const date = new Date(t.createdTime);
-            const mMatch = currentFilterMonth === -1 || date.getMonth() === currentFilterMonth;
-            const yMatch = date.getFullYear() === currentFilterYear;
-            return mMatch && yMatch;
+        const [accRes, txRes, catRes] = await Promise.all([
+            fetch(`${API_URL}/Accounts/${id}`),
+            fetch(`${API_URL}/transactions/${id}?page=1&limit=500`),
+            fetch(catUrl)
+        ]);
+
+        const accData = await accRes.json();
+        const allTxs = await txRes.json();
+        const categories = await catRes.json();
+
+        // 2. Считаем статистику за выбранный период (для карточек)
+        const periodTxs = allTxs.filter(t => {
+            const d = new Date(t.createdTime);
+            const m = currentFilterMonth === -1 || d.getMonth() === currentFilterMonth;
+            const y = d.getFullYear() === currentFilterYear;
+            return m && y;
         });
 
-        const income = filteredTxs.filter(t => t.type === 1).reduce((sum, t) => sum + t.value, 0);
-        const expense = filteredTxs.filter(t => t.type === 2).reduce((sum, t) => sum + t.value, 0);
+        const incomeSum = periodTxs.filter(t => t.type === 1).reduce((sum, t) => sum + t.value, 0);
+        const expenseSum = periodTxs.filter(t => t.type === 2).reduce((sum, t) => sum + t.value, 0);
+
+        // 3. Фильтруем список транзакций (учитываем тип и категорию)
+        const filteredTxs = periodTxs.filter(t => {
+            const tMatch = currentFilterType === 0 || t.type === currentFilterType;
+            const cMatch = currentFilterCategory === "all" || t.categoryName === currentFilterCategory;
+            return tMatch && cMatch;
+        });
 
         area.innerHTML = `
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
-                <!-- Название + Карандаш в один ряд -->
                 <div id="account-title-container" style="display: flex; align-items: center; gap: 10px;">
                     <h1 style="margin:0;">${name}</h1>
-                    <button class="btn-edit" onclick="enableEditAccount('${id}', '${name}')" style="margin:0;">✎</button>
+                    <button class="btn-edit" onclick="enableEditAccount('${id}', '${name}')">✎</button>
                 </div>
-
-                <!-- Блок кнопок + Три точки -->
                 <div style="display:flex; gap:10px; align-items: center;">
                     <button class="btn-submit" style="background:#6c757d; width:auto; padding:10px 20px;" onclick="showAccountTargetForm('${id}', '${name}')">🎯 Цель</button>
                     <button class="btn-submit" style="background:#6c757d; width:auto; padding:10px 20px;" onclick="showTransferForm('${id}', '${name}')">⇄ Перевод</button>
                     <button class="btn-submit" style="background:#28a745; width:auto; padding:10px 20px;" onclick="showForm('${id}', '${name}')">+ Операция</button>
-                    
                     <div class="dropdown">
                         <button class="btn-more" onclick="toggleAccountMenu()">⋮</button>
                         <div id="account-dropdown" class="dropdown-content">
@@ -83,39 +97,49 @@ async function showAccount(id, name) {
                 </div>
             </div>
 
-            <!-- Карточки статистики -->
+            <!-- КЛИКАБЕЛЬНЫЕ КАРТОЧКИ СЧЕТА -->
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 30px;">
-                <div class="form-card" style="border-left: 5px solid #28a745; margin:0; padding:15px;">
-                    <small style="color:#888; text-transform:uppercase; font-size:0.7rem; font-weight:bold;">Доходы</small>
-                    <div style="font-size: 1.3rem; font-weight: bold; color: #28a745;">+${income.toLocaleString()} ₽</div>
+                <div class="form-card" onclick="toggleAccountTypeFilter('${id}', '${name}', 1)" 
+                     style="border-left: 5px solid #28a745; cursor: pointer; border: ${currentFilterType === 1 ? '2px solid #28a745' : '1px solid #eee'}; background: ${currentFilterType === 1 ? '#f1fdf7' : 'white'}; padding: 15px; margin:0;">
+                    <small style="color:#888; text-transform:uppercase; font-size:0.7rem;">Доходы ${currentFilterType === 1 ? '●' : ''}</small>
+                    <div style="font-size: 1.3rem; font-weight: bold; color: #28a745;">+${incomeSum.toLocaleString()} ₽</div>
                 </div>
-                <div class="form-card" style="border-left: 5px solid #dc3545; margin:0; padding:15px;">
-                    <small style="color:#888; text-transform:uppercase; font-size:0.7rem; font-weight:bold;">Расходы</small>
-                    <div style="font-size: 1.3rem; font-weight: bold; color: #dc3545;">-${expense.toLocaleString()} ₽</div>
+                <div class="form-card" onclick="toggleAccountTypeFilter('${id}', '${name}', 2)" 
+                     style="border-left: 5px solid #dc3545; cursor: pointer; border: ${currentFilterType === 2 ? '2px solid #dc3545' : '1px solid #eee'}; background: ${currentFilterType === 2 ? '#fff5f5' : 'white'}; padding: 15px; margin:0;">
+                    <small style="color:#888; text-transform:uppercase; font-size:0.7rem;">Расходы ${currentFilterType === 2 ? '●' : ''}</small>
+                    <div style="font-size: 1.3rem; font-weight: bold; color: #dc3545;">-${expenseSum.toLocaleString()} ₽</div>
                 </div>
             </div>
 
-            <!-- Фильтрация в ряд -->
-            <div style="display: flex; justify-content: space-between; align-items: center; margin: 25px 0 15px 0;">
-                <h4 style="margin: 0; font-size: 1.1rem;">История операций</h4>
-                <div style="display: flex; gap: 10px;">
-                    <select class="select-inline" onchange="changeAccountFilter('${id}', '${name}', this.value, null)" style="height:35px; border-radius:8px;">
-                        <option value="-1" ${currentFilterMonth === -1 ? 'selected' : ''}>Все месяцы</option>
-                        ${['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'].map((m, i) =>
-            `<option value="${i}" ${i === currentFilterMonth ? 'selected' : ''}>${m}</option>`).join('')}
-                    </select>
-                    <select class="select-inline" onchange="changeAccountFilter('${id}', '${name}', null, this.value)" style="height:35px; border-radius:8px;">
-                        <option value="2025" ${currentFilterYear === 2025 ? 'selected' : ''}>2025</option>
-                        <option value="2026" ${currentFilterYear === 2026 ? 'selected' : ''}>2026</option>
-                    </select>
-                </div>
-            </div>
+            <!-- ФИЛЬТРЫ В РЯД -->
+            <div style="display: flex !important; justify-content: space-between !important; align-items: center !important; margin: 25px 0 15px 0 !important; width: 100% !important; min-height: 40px !important;">
+    <h4 style="margin: 0 !important; font-size: 1.1rem; white-space: nowrap !important; display: flex !important; align-items: center !important;">
+        ${currentFilterType === 0 ? 'История операций' : currentFilterType === 1 ? 'Только доходы' : 'Только расходы'}
+    </h4>
+    <div style="display: flex !important; gap: 10px !important; align-items: center !important;">
+        <select class="select-inline" onchange="changeAccountFilter('${id}', '${name}', null, null, this.value)" 
+                style="height: 38px !important; border-radius: 8px !important; width: 140px !important; margin: 0 !important; box-sizing: border-box !important;">
+            <option value="all">Все категории</option>
+            ${categories.map(c => `<option value="${c.name || c.Name}" ${currentFilterCategory === (c.name || c.Name) ? 'selected' : ''}>${c.name || c.Name}</option>`).join('')}
+        </select>
+        <select class="select-inline" onchange="changeAccountFilter('${id}', '${name}', this.value, null, null)" 
+                style="height: 38px !important; border-radius: 8px !important; margin: 0 !important; box-sizing: border-box !important;">
+            <option value="-1" ${currentFilterMonth === -1 ? 'selected' : ''}>Все месяцы</option>
+            ${['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'].map((m, i) => `<option value="${i}" ${i === currentFilterMonth ? 'selected' : ''}>${m}</option>`).join('')}
+        </select>
+        <select class="select-inline" onchange="changeAccountFilter('${id}', '${name}', null, this.value, null)" 
+                style="height: 38px !important; border-radius: 8px !important; margin: 0 !important; box-sizing: border-box !important;">
+            <option value="2025" ${currentFilterYear === 2025 ? 'selected' : ''}>2025</option>
+            <option value="2026" ${currentFilterYear === 2026 ? 'selected' : ''}>2026</option>
+        </select>
+    </div>
+</div>
 
             <div id="transactions-list">
-                ${filteredTxs.map(t => {
-                const isTransfer = t.relatedTransactionId !== null;
-                const title = isTransfer ? (t.type === 2 ? '⇄ Перевод (Расход)' : '⇄ Перевод (Зачисление)') : (t.categoryName || 'Без категории');
-                return `
+                ${filteredTxs.length > 0 ? filteredTxs.map(t => {
+            const isTransfer = t.relatedTransactionId !== null;
+            const title = isTransfer ? (t.type === 2 ? '⇄ Перевод (Расход)' : '⇄ Перевод (Зачисление)') : (t.categoryName || 'Без категории');
+            return `
                         <div class="tr-item">
                             <button class="btn-delete" onclick="deleteTransaction('${t.id}', '${id}', '${name}')">&times;</button>
                             <div class="tr-info">
@@ -127,27 +151,26 @@ async function showAccount(id, name) {
                                 ${t.type === 2 ? '-' : '+'}${t.value.toLocaleString()} ₽
                             </span>
                         </div>`;
-            }).join('')}
+        }).join('') : '<p class="text-center text-muted p-5">Транзакций не найдено</p>'}
             </div>
         `;
 
-    } catch (e) {
-        console.error(e);
-        area.innerHTML = "<h2>Ошибка загрузки счета</h2>";
-    }
+    } catch (e) { console.error(e); area.innerHTML = "<h2>Ошибка загрузки счета</h2>"; }
 }
 
 // Вспомогательная функция (обязательно добавь её в app.js)
-function changeAccountFilter(id, name, month, year) {
+function changeAccountFilter(id, name, month, year, category) {
     if (month !== null) currentFilterMonth = parseInt(month);
     if (year !== null) currentFilterYear = parseInt(year);
+    if (category !== null) currentFilterCategory = category;
     showAccount(id, name);
 }
 
-function changeAccountFilter(id, name, month, year) {
-    if (month !== null) currentFilterMonth = parseInt(month);
-    if (year !== null) currentFilterYear = parseInt(year);
-    showAccount(id, name); // Перерисовываем текущий счет
+// Фильтр через клик по карточкам
+function toggleAccountTypeFilter(id, name, type) {
+    currentFilterType = (currentFilterType === type) ? 0 : type;
+    currentFilterCategory = "all"; // Сбрасываем категорию при смене типа
+    showAccount(id, name);
 }
 
 // Вспомогательная функция для баджа (вынесли для чистоты)
