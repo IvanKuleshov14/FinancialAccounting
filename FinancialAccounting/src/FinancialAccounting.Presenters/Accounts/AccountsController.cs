@@ -53,7 +53,7 @@ namespace FinancialAccounting.Presenters
         {
             var result = await _accountService.GetAccount(accountId, cancellationToken);
 
-            if(result == null)
+            if (result == null)
             {
                 return NotFound("Счет не найден");
             }

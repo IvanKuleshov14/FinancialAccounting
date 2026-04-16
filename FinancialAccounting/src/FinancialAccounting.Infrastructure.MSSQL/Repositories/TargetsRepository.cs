@@ -40,6 +40,11 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Repositories
             {
                 throw new Exception("Цель не найдена");
             }
+            var transactions = await _dbContext.TargetTransactions.
+                Where(t => t.TargetId == targetId).
+                ToListAsync();
+            _dbContext.TargetTransactions.RemoveRange(transactions);
+
             _dbContext.Targets.Remove(target);
             await _dbContext.SaveChangesAsync();
         }
@@ -49,6 +54,13 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Repositories
             return await _dbContext.Targets.
                 AsNoTracking().
                 ToListAsync();
+        }
+
+        public async Task<Target?> GetAsync(Guid id, CancellationToken cancellationToken)
+        {
+            return await _dbContext.Targets.
+                AsNoTracking().
+                FirstOrDefaultAsync(t => t.Id == id);
         }
     }
 }

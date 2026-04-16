@@ -867,6 +867,83 @@ async function loadTargets() {
     }
 }
 
+async function showTargetDetails(id, name) {
+    const area = document.getElementById('details-area');
+    area.innerHTML = '<div class="text-center mt-5">Обработка...</div>';
+
+    try {
+        const res = await fetch(`${API_URL}/Targets/${id}`);
+        if (!res.ok) throw new Error(`Ошибка сервера: ${res.status}`);
+
+        const target = await res.json();
+        console.log("Пришли данные:", target); // Проверь это в консоли F12!
+
+        // Безопасное извлечение полей (пробуем и маленькую, и большую буквы)
+        const tId = target.id || target.Id || id;
+        const tName = target.name || target.Name || name;
+        const tTotal = target.total ?? target.Total ?? 0;
+        const tGoal = target.goal ?? target.Goal ?? 0;
+        const tProgress = target.progress ?? target.Progress ?? 0;
+
+        const percent = Math.min(Math.round(tProgress), 100);
+
+        area.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
+                <h1 style="margin:0;">${tName}</h1>
+                <div style="display:flex; gap:10px;">
+    <!-- Кнопка пополнения (пока заглушка) -->
+   <button class="btn-submit" style="background:#28a745; width:auto; padding:10px 20px;"
+    onclick="openDepositTargetForm('${tId}', '${tName}')">+ Операция</button>
+
+    <!-- Кнопка РЕДАКТИРОВАНИЯ: передаем ID, текущее имя и цель -->
+    <button class="btn-inline-add"
+            onclick="showEditAutonomousTargetForm('${tId}', '${tName}', ${tGoal})" 
+            style="background: #f0f2f5; color: #65676b; border: 1px solid #ddd; width: 45px; height: 45px;" 
+            title="Редактировать">✎</button>
+            
+    <!-- Кнопка УДАЛЕНИЯ -->
+    <button class="btn-inline-del" onclick="deleteTarget('${tId}')" style="margin:0; width: 45px; height: 45px;">🗑</button>
+</div>
+            </div>
+
+            <div class="form-card" style="border-top: 5px solid #28a745; margin-bottom: 30px; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+                <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:15px;">
+                    <div>
+                        <small style="color:#888; text-transform:uppercase;">Накоплено</small>
+                        <div style="font-size: 2rem; font-weight: 800; color: #28a745;">${Number(tTotal).toLocaleString()} ₽</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <small style="color:#888; text-transform:uppercase;">Цель</small>
+                        <div style="font-size: 1.2rem; font-weight: 600;">${Number(tGoal).toLocaleString()} ₽</div>
+                    </div>
+                </div>
+
+                <div style="width: 100%; height: 16px; background:#e9ecef; border-radius: 10px; overflow: hidden;">
+                    <div style="width: ${percent}%; height: 100%; background: #28a745; transition: width 0.5s;"></div>
+                </div>
+                <div style="text-align:center; margin-top:10px; font-weight:bold; color:#28a745;">${percent}% завершено</div>
+            </div>
+
+            <div class="section-title" style="margin-top: 40px; color: #65676b; font-size: 0.9rem; text-transform: uppercase;">История пополнений</div>
+            <div id="target-history-list">
+                <!-- Здесь будет список транзакций -->
+            </div>
+        `;
+
+        // Загружаем транзакции для этой цели
+        loadTargetTransactions(tId);
+
+    } catch (err) {
+        console.error("Ошибка в блоке отрисовки:", err);
+        area.innerHTML = `
+            <div style="padding: 20px; border: 1px solid #ffc1c1; background: #fff5f5; border-radius: 10px; color: #dc3545;">
+                <h4>Ошибка отрисовки</h4>
+                <p>${err.message}</p>
+                <small>Проверь консоль браузера (F12) для деталей.</small>
+            </div>`;
+    }
+}
+
 function showCreateTargetForm() {
     const area = document.getElementById('details-area');
     area.innerHTML = `
@@ -930,6 +1007,252 @@ async function submitCreateTarget() {
     } catch (e) {
         console.error(e);
         await loadTargets();
+    }
+}
+
+async function deleteTarget(id) {
+    if (!confirm("Удалить эту копилку? Все данные о накоплениях будут удалены.")) return;
+
+    try {
+        const res = await fetch(`${API_URL}/Targets/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+            await loadTargets(); // Обновить сайдбар
+            document.getElementById('details-area').innerHTML = '<div class="text-center mt-5"><h3>Копилка удалена</h3></div>';
+        }
+    } catch (e) {
+        console.error(e);
+        await loadTargets();
+    }
+}
+
+// 1. Показать форму редактирования
+function showEditAutonomousTargetForm(id, oldName, oldGoal) {
+    const area = document.getElementById('details-area');
+
+    area.innerHTML = `
+        <div class="form-card">
+            <h2 style="text-align:center; margin-bottom:20px;">Изменить копилку</h2>
+            
+            <label class="section-title">Название:</label>
+            <input type="text" id="edit-target-name" value="${oldName}" autofocus>
+
+            <label class="section-title">Сумма цели (₽):</label>
+            <input type="number" id="edit-target-goal" value="${oldGoal}" step="0.01">
+
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn-submit" style="background:#28a745;" onclick="submitUpdateAutonomousTarget('${id}')">Сохранить</button>
+                <button class="btn-submit" style="background:#6c757d;" onclick="showTargetDetails('${id}', '${oldName}')">Отмена</button>
+            </div>
+        </div>
+    `;
+}
+
+// 2. Отправка PUT запроса
+async function submitUpdateAutonomousTarget(id) {
+    const newName = document.getElementById('edit-target-name').value;
+    const newGoal = document.getElementById('edit-target-goal').value;
+
+    if (!newName || !newGoal) return alert("Заполните все поля");
+
+    const payload = {
+        name: newName,
+        goal: parseFloat(newGoal)
+    };
+
+    try {
+        const res = await fetch(`${API_URL}/Targets/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+            // 1. Обновляем список в сайдбаре (если имя изменилось)
+            await loadTargets();
+            // 2. Возвращаемся в детализацию цели
+            showTargetDetails(id, newName);
+        } else {
+            alert("Не удалось сохранить изменения");
+        }
+    } catch (e) {
+        console.error("Ошибка при обновлении цели:", e);
+        // Если CORS или мелкий сбой — всё равно пробуем обновиться
+        await loadTargets();
+        showTargetDetails(id, newName);
+    }
+}
+
+async function deleteTarget(id) {
+    // 1. Спрашиваем подтверждение (важно для удаления)
+    if (!confirm("Вы уверены, что хотите удалить эту копилку? Все данные о накоплениях будут потеряны.")) {
+        return;
+    }
+
+    try {
+        // 2. Отправляем запрос на удаление
+        const res = await fetch(`${API_URL}/Targets/${id}`, {
+            method: 'DELETE'
+        });
+
+        if (res.ok) {
+            // 3. Обновляем список копилок в левой панели
+            await loadTargets();
+
+            // 4. Очищаем центральную область
+            document.getElementById('details-area').innerHTML = `
+                <div class="text-center text-muted mt-5">
+                    <h2>Копилка удалена</h2>
+                    <p>Выберите другую цель или счет слева</p>
+                </div>
+            `;
+        } else {
+            const err = await res.text();
+            alert("Ошибка при удалении: " + err);
+        }
+    } catch (e) {
+        console.error("Ошибка удаления:", e);
+        // Если была сетевая ошибка/CORS, но в базе удалилось
+        await loadTargets();
+        document.getElementById('details-area').innerHTML = "<h2>Готово</h2>";
+    }
+}
+
+// Функция открытия формы пополнения
+function openDepositTargetForm(targetId, targetName) {
+    const area = document.getElementById('details-area');
+
+    area.innerHTML = `
+        <div class="form-card" style="border-top: 5px solid #28a745;">
+            <h2 style="text-align:center; margin-bottom:20px;">Операция с копилкой</h2>
+            <p style="text-align:center; color:#888; margin-bottom:20px;">Цель: <strong>${targetName}</strong></p>
+            
+            <!-- Выбор: Положить или Забрать -->
+            <div class="type-selector" style="margin-bottom: 30px;">
+                <input type="radio" name="depType" id="type-dep-inc" value="1" checked>
+                <label class="type-btn" for="type-dep-inc" style="border-color: #28a745; color: #28a745;">Положить</label>
+                
+                <input type="radio" name="depType" id="type-dep-exp" value="2">
+                <label class="type-btn" for="type-dep-exp" style="border-color: #dc3545; color: #dc3545;">Забрать</label>
+            </div>
+
+            <label class="section-title">Сумма (₽):</label>
+            <input type="number" id="deposit-value" placeholder="0.00" step="0.01" autofocus 
+                   style="font-size: 2.5rem; text-align: center; font-weight: 800; border: none; outline: none; width: 100%;">
+
+            <label class="section-title" style="margin-top:20px;">Описание:</label>
+            <input type="text" id="deposit-desc" placeholder="На что или откуда?">
+
+            <div style="margin-top: 30px; display: flex; gap: 10px;">
+                <button class="btn-submit" style="background:#28a745;" onclick="submitTargetDeposit('${targetId}', '${targetName}')">Подтвердить</button>
+                <button class="btn-submit" style="background:#f0f2f5; color:#888;" onclick="showTargetDetails('${targetId}', '${targetName}')">Отмена</button>
+            </div>
+        </div>
+    `;
+
+    // Смена цвета суммы при переключении типа (для визуала)
+    document.getElementById('type-dep-inc').onchange = () => document.getElementById('deposit-value').style.color = '#28a745';
+    document.getElementById('type-dep-exp').onchange = () => document.getElementById('deposit-value').style.color = '#dc3545';
+
+    // По умолчанию зеленый
+    document.getElementById('deposit-value').style.color = '#28a745';
+}
+
+async function submitTargetDeposit(targetId, targetName) {
+    const valInput = document.getElementById('deposit-value').value;
+    const descInput = document.getElementById('deposit-desc').value;
+    // Считываем выбранный тип (1 или 2)
+    const typeInput = document.querySelector('input[name="depType"]:checked').value;
+
+    if (!valInput || valInput <= 0) return alert("Введите сумму");
+
+    const payload = {
+        targetId: targetId,
+        type: parseInt(typeInput), // 1 - Пополнение, 2 - Снятие
+        value: parseFloat(valInput),
+        createdDay: new Date().toISOString().split('T')[0],
+        description: descInput || (parseInt(typeInput) === 1 ? "Пополнение" : "Снятие")
+    };
+
+    try {
+        const res = await fetch(`${API_URL}/TargetTransactions`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+            await loadTargets();
+            showTargetDetails(targetId, targetName);
+        } else {
+            const err = await res.text();
+            alert("Ошибка: " + err);
+        }
+    } catch (e) {
+        console.error(e);
+        await loadTargets();
+        showTargetDetails(targetId, targetName);
+    }
+}
+
+async function deleteTargetTransaction(transactionId, targetId, targetName) {
+    if (!confirm("Удалить эту запись из истории копилки?")) return;
+
+    try {
+        const res = await fetch(`${API_URL}/TargetTransactions/${transactionId}`, {
+            method: 'DELETE'
+        });
+
+        if (res.ok) {
+            // Обновляем прогресс в сайдбаре и на дашборде
+            await loadTargets();
+            showTargetDetails(targetId, targetName);
+        } else {
+            alert("Не удалось удалить транзакцию");
+        }
+    } catch (e) {
+        console.error(e);
+        await loadTargets();
+        showTargetDetails(targetId, targetName);
+    }
+}
+
+async function loadTargetTransactions(targetId) {
+    const list = document.getElementById('target-history-list');
+    const targetName = document.querySelector('h1').innerText; // Берем имя для обновления экрана
+
+    try {
+        const res = await fetch(`${API_URL}/TargetTransactions/${targetId}`);
+        const txs = await res.json();
+
+        if (txs.length === 0) {
+            list.innerHTML = '<div style="text-align:center; padding:30px; color:#bbb;">История пуста</div>';
+            return;
+        }
+
+        list.innerHTML = txs.map(t => {
+            const isDeposit = t.type === 1;
+            const amountClass = isDeposit ? 'tr-amount-pos' : 'tr-amount-neg';
+
+            return `
+                <div class="tr-item" style="border-left: 4px solid ${isDeposit ? '#28a745' : '#dc3545'};">
+                    <!-- КНОПКА УДАЛЕНИЯ -->
+                    <button class="btn-delete-small" 
+                        onclick="deleteTargetTransaction('${t.id}', '${targetId}', '${targetName}')" 
+                        title="Удалить запись">&times;</button>
+                    
+                    <div class="tr-info">
+                        <strong>${isDeposit ? 'Зачисление' : 'Снятие'}</strong>
+                        ${t.description ? `<span class="tr-desc">${t.description}</span>` : ''}
+                        <small style="color: #bcc0c4;">${new Date(t.createdTime).toLocaleDateString()}</small>
+                    </div>
+                    <span class="${amountClass}" style="margin-right: 25px;">
+                        ${isDeposit ? '+' : '-'}${t.value.toLocaleString()} ₽
+                    </span>
+                </div>
+            `;
+        }).join('');
+    } catch (e) {
+        list.innerHTML = "Ошибка загрузки истории";
     }
 }
 

@@ -77,5 +77,24 @@ namespace FinancialAccounting.Application.Targets
                     );
             }).ToList();
         }
+
+        public async Task<GetTargetDto?> GetTarget(Guid id, CancellationToken cancellationToken)
+        {
+            var target = await _targetsRepository.GetAsync(id, cancellationToken);
+            if(target == null)
+            {
+                return null;
+            }
+
+            decimal progress = Math.Round(target.Total / target.Goal * 100, 2);
+
+            return new GetTargetDto(
+                target.Id,
+                target.Name,
+                target.Total,
+                target.Goal,
+                progress
+                );
+        }
     }
 }
