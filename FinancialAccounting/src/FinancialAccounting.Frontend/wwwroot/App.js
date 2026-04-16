@@ -1364,166 +1364,154 @@ async function loadTotalBalance() {
     }
 }
 
-let currentFilterMonth = new Date().getMonth(); // 0-11
+let currentFilterMonth = new Date().getMonth();
 let currentFilterYear = new Date().getFullYear();
-
+let currentFilterCategory = "all";
+let currentFilterType = 0;
 async function showTotalDashboard() {
     const area = document.getElementById('details-area');
     area.innerHTML = '<div class="text-center mt-5">Анализ данных...</div>';
 
     try {
-        const [accRes, txRes] = await Promise.all([
+        // 1. Формируем URL для категорий в зависимости от типа
+        let catUrl = `${API_URL}/Categories`;
+        if (currentFilterType !== 0) catUrl += `?type=${currentFilterType}`;
+
+        // 2. Грузим всё разом
+        const [accRes, txRes, catRes] = await Promise.all([
             fetch(`${API_URL}/Accounts`),
-            fetch(`${API_URL}/Transactions?page=1&limit=500`) // Берем побольше для истории
+            fetch(`${API_URL}/Transactions?page=1&limit=500`),
+            fetch(catUrl)
         ]);
 
         const accounts = await accRes.json();
         const allTxs = await txRes.json();
+        const categories = await catRes.json();
 
-        const filteredTxs = allTxs.filter(t => {
-            const date = new Date(t.createdTime);
-            const yearMatch = date.getFullYear() === currentFilterYear;
-
-            // Если currentFilterMonth === -1, значит месяц не важен (пропускаем всех)
-            const monthMatch = currentFilterMonth === -1 || date.getMonth() === currentFilterMonth;
-
-            return yearMatch && monthMatch;
-        });
-
-        const totalSum = accounts.reduce((sum, acc) => sum + acc.total, 0);
-        const income = filteredTxs.filter(t => t.type === 1).reduce((sum, t) => sum + t.value, 0);
-        const expense = filteredTxs.filter(t => t.type === 2).reduce((sum, t) => sum + t.value, 0);
+        // 3. Расчеты
+        const totalSum = accounts.reduce((sum, acc) => sum + (acc.total || 0), 0);
         const colors = ['#0084ff', '#28a745', '#ffc107', '#17a2b8', '#6610f2'];
 
+        // Фильтруем транзакции (убираем переводы и применяем фильтры)
+        const externalTxs = allTxs.filter(t => t.relatedTransactionId === null);
+
+        // Для карточек считаем суммы только за ВЫБРАННЫЙ ПЕРИОД (без учета типа и категории)
+        const periodTxs = externalTxs.filter(t => {
+            const d = new Date(t.createdTime);
+            const m = currentFilterMonth === -1 || d.getMonth() === currentFilterMonth;
+            const y = d.getFullYear() === currentFilterYear;
+            return m && y;
+        });
+        const incomeSum = periodTxs.filter(t => t.type === 1).reduce((sum, t) => sum + t.value, 0);
+        const expenseSum = periodTxs.filter(t => t.type === 2).reduce((sum, t) => sum + t.value, 0);
+
+        // Для списка фильтруем еще и по типу/категории
+        const filteredTxs = periodTxs.filter(t => {
+            const tMatch = currentFilterType === 0 || t.type === currentFilterType;
+            const cMatch = currentFilterCategory === "all" || t.categoryName === currentFilterCategory;
+            return tMatch && cMatch;
+        });
+
+        // 4. Отрисовка
         area.innerHTML = `
-    <h1 style="margin-bottom: 20px !important;">Общий обзор</h1>
-    
-    <!-- 1. ДИАГРАММА С ПРОЦЕНТАМИ И ЛЕГЕНДОЙ -->
-    <div class="form-card" style="margin-bottom: 25px; padding: 20px; border-radius: 15px;">
-        <h5 class="mb-3" style="font-weight: bold; color: #2d3748;">Распределение средств (сейчас)</h5>
-
-        <div class="chart-container" style="height: 40px; display: flex; border-radius: 10px; overflow: hidden; background: #f0f2f5; margin-bottom: 20px;">
-            ${accounts.map((acc, i) => {
-                const share = totalSum > 0 ? (acc.total / totalSum) * 100 : 0;
-                if (share <= 0) return '';
-
-                return `
-                    <div class="chart-segment" 
-                         style="
-                            width: ${share}%; 
-                            background: ${colors[i % colors.length]}; 
-                            display: flex; 
-                            align-items: center; 
-                            justify-content: center; 
-                            color: white; 
-                            font-size: 0.75rem; 
-                            font-weight: bold;
-                            white-space: nowrap;
-                            overflow: hidden;
-                            transition: width 0.6s ease;
-                         " 
-                         title="${acc.name}: ${Math.round(share)}%">
-                        ${share > 7 ? Math.round(share) + '%' : ''} 
-                    </div>`;
-            }).join('')}
-        </div>
-        
-        <!-- ВОЗВРАЩАЕМ ЛЕГЕНДУ -->
-        <div style="display: flex; flex-wrap: wrap; gap: 15px;">
-            ${accounts.filter(a => a.total > 0).map((acc, i) => `
-                <div style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem;">
-                    <div style="width: 12px; height: 12px; border-radius: 3px; background: ${colors[i % colors.length]};"></div>
-                    <span style="color: #65676b;">${acc.name}:</span>
-                    <span style="font-weight: bold; color: #2d3748;">${acc.total.toLocaleString()} ₽</span>
+            <h1 style="margin-bottom: 20px !important;">Общий обзор</h1>
+            
+            <!-- ДИАГРАММА -->
+            <div class="form-card" style="margin-bottom: 25px; padding: 20px; border-radius: 15px;">
+                <h5 class="mb-3" style="font-weight: bold; color: #2d3748;">Распределение средств (сейчас)</h5>
+                <div class="chart-container" style="height: 40px; display: flex; border-radius: 10px; overflow: hidden; background: #f0f2f5; margin-bottom: 20px;">
+                    ${accounts.map((acc, i) => {
+            const share = totalSum > 0 ? (acc.total / totalSum) * 100 : 0;
+            if (share <= 0) return '';
+            return `<div class="chart-segment" style="width:${share}%; background:${colors[i % colors.length]}; display:flex; align-items:center; justify-content:center; color:white; font-size:0.75rem; font-weight:bold; overflow:hidden;">${share > 7 ? Math.round(share) + '%' : ''}</div>`;
+        }).join('')}
                 </div>
-            `).join('')}
-        </div>
-    </div>
-
-    <!-- 2. СТАТИСТИКА -->
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px;">
-        <div class="form-card" style="border-left: 5px solid #28a745; margin: 0; padding: 15px;">
-            <small class="text-muted text-uppercase" style="font-size: 0.7rem;">Доходы за период</small>
-            <div style="font-size: 1.3rem; font-weight: bold; color: #28a745;">+${income.toLocaleString()} ₽</div>
-        </div>
-        <div class="form-card" style="border-left: 5px solid #dc3545; margin: 0; padding: 15px;">
-            <small class="text-muted text-uppercase" style="font-size: 0.7rem;">Расходы за период</small>
-            <div style="font-size: 1.3rem; font-weight: bold; color: #dc3545;">-${expense.toLocaleString()} ₽</div>
-        </div>
-    </div>
-
-    <!-- 3. СТРОКА ФИЛЬТРАЦИИ НА ВСЮ ШИРИНУ -->
-    <div style="display: flex !important; justify-content: space-between !important; align-items: center !important; margin: 25px 0 15px 0 !important; width: 100% !important;">
-
-        <!-- Заголовок слева -->
-        <h4 style="margin: 0 !important; font-size: 1.1rem; white-space: nowrap !important;">Операции за период</h4>
-
-        <!-- Группа фильтров справа -->
-        <div style="display: flex !important; gap: 10px !important; align-items: center !important;">
-    <select class="select-inline" id="month-select" onchange="changeGlobalFilter(this.value, null)"
-        style="
-            height: 38px !important;
-            margin: 0 !important;
-            padding: 0 12px !important;
-            border-radius: 8px !important;
-            border: 1px solid #ddd !important;
-            background: white !important;
-            cursor: pointer !important;
-            box-sizing: border-box !important;
-            font-size: 0.9rem !important;
-        ">
-        <option value="-1" ${currentFilterMonth === -1 ? 'selected' : ''}>Все месяцы</option>
-        ${['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь']
-                .map((m, i) => `<option value="${i}" ${i === currentFilterMonth ? 'selected' : ''}>${m}</option>`).join('')}
-    </select>
-
-    <select class="select-inline" id="year-select" onchange="changeGlobalFilter(null, this.value)" 
-        style="
-            height: 38px !important; 
-            margin: 0 !important; 
-            padding: 0 12px !important; 
-            border-radius: 8px !important; 
-            border: 1px solid #ddd !important; 
-            background: white !important; 
-            cursor: pointer !important;
-            box-sizing: border-box !important;
-            font-size: 0.9rem !important;
-        ">
-        ${[2024, 2025, 2026].map(y => `<option value="${y}" ${y === currentFilterYear ? 'selected' : ''}>${y}</option>`).join('')}
-    </select>
-</div>
-    </div>
-
-    <div id="global-transactions-list">
-        ${filteredTxs.length > 0 ? filteredTxs.map(t => `
-            <div class="tr-item">
-                <div class="tr-info">
-                    <strong>${t.categoryName || 'Без категории'}</strong>
-                    <div style="font-size: 0.75rem; color: #0084ff;">${t.accountName}</div>
-                    <small style="color: #888;">${new Date(t.createdTime).toLocaleDateString()}</small>
+                <div style="display: flex; flex-wrap: wrap; gap: 15px;">
+                    ${accounts.filter(a => a.total > 0).map((acc, i) => `
+                        <div style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem;">
+                            <div style="width: 12px; height: 12px; border-radius: 3px; background: ${colors[i % colors.length]};"></div>
+                            <span style="color: #65676b;">${acc.name}:</span>
+                            <span style="font-weight: bold;">${acc.total.toLocaleString()} ₽</span>
+                        </div>`).join('')}
                 </div>
-                <span class="${t.type === 2 ? 'tr-amount-neg' : 'tr-amount-pos'}">
-                    ${t.type === 2 ? '-' : '+'}${t.value.toLocaleString()} ₽
-                </span>
             </div>
-        `).join('') : '<p class="text-center text-muted p-5">Транзакций за этот период не найдено</p>'}
+
+            <!-- КЛИКАБЕЛЬНЫЕ КАРТОЧКИ -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px;">
+                <div class="form-card" onclick="toggleTypeFilter(1)" 
+                     style="border-left: 5px solid #28a745; cursor: pointer; border: ${currentFilterType === 1 ? '2px solid #28a745' : '1px solid #eee'}; background: ${currentFilterType === 1 ? '#f1fdf7' : 'white'}; padding: 15px; margin:0;">
+                    <small style="color:#888; text-transform:uppercase; font-size:0.7rem;">Доходы ${currentFilterType === 1 ? '●' : ''}</small>
+                    <div style="font-size: 1.3rem; font-weight: bold; color: #28a745;">+${incomeSum.toLocaleString()} ₽</div>
+                </div>
+                <div class="form-card" onclick="toggleTypeFilter(2)" 
+                     style="border-left: 5px solid #dc3545; cursor: pointer; border: ${currentFilterType === 2 ? '2px solid #dc3545' : '1px solid #eee'}; background: ${currentFilterType === 2 ? '#fff5f5' : 'white'}; padding: 15px; margin:0;">
+                    <small style="color:#888; text-transform:uppercase; font-size:0.7rem;">Расходы ${currentFilterType === 2 ? '●' : ''}</small>
+                    <div style="font-size: 1.3rem; font-weight: bold; color: #dc3545;">-${expenseSum.toLocaleString()} ₽</div>
+                </div>
+            </div>
+
+            <!-- ФИЛЬТРЫ В РЯД -->
+            <div style="display: flex !important; justify-content: space-between !important; align-items: center !important; margin-bottom: 15px !important; width: 100% !important; min-height: 40px !important;">
+
+        <!-- Заголовок: убираем все отступы и центрируем вертикально -->
+        <h4 style="margin: 0 !important; font-size: 1.1rem; display: flex !important; align-items: center !important; height: 100% !important;">
+            ${currentFilterType === 0 ? 'Все операции' : currentFilterType === 1 ? 'Только доходы' : 'Только расходы'}
+        </h4>
+
+        <div style="display: flex !important; gap: 10px !important; align-items: center !important;">
+            
+            <select class="select-inline" onchange="changeGlobalFilter(this.value, null, null)" 
+                style="height: 38px !important; border-radius: 8px !important; margin: 0 !important; box-sizing: border-box !important;">
+                <option value="-1" ${currentFilterMonth === -1 ? 'selected' : ''}>Все месяцы</option>
+                ${['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'].map((m, i) => `<option value="${i}" ${i === currentFilterMonth ? 'selected' : ''}>${m}</option>`).join('')}
+            </select>
+
+            <select class="select-inline" onchange="changeGlobalFilter(null, this.value, null)" 
+                style="height: 38px !important; border-radius: 8px !important; margin: 0 !important; box-sizing: border-box !important;">
+                <option value="2025" ${currentFilterYear === 2025 ? 'selected' : ''}>2025</option>
+                <option value="2026" ${currentFilterYear === 2026 ? 'selected' : ''}>2026</option>
+            </select>
+
+            <select class="select-inline" onchange="changeGlobalFilter(null, null, this.value)" 
+                style="height: 38px !important; border-radius: 8px !important; width: 150px !important; margin: 0 !important; box-sizing: border-box !important;">
+                <option value="all" ${currentFilterCategory === "all" ? 'selected' : ''}>Все категории</option>
+                ${categories.map(c => `<option value="${c.name || c.Name}" ${currentFilterCategory === (c.name || c.Name) ? 'selected' : ''}>${c.name || c.Name}</option>`).join('')}
+            </select>
+        </div>
     </div>
-`;
-    } catch (e) {
-        console.error(e);
-        area.innerHTML = "<h2>Ошибка загрузки данных</h2>";
-    }
+
+            <div id="global-transactions-list">
+                ${filteredTxs.length > 0 ? filteredTxs.map(t => `
+                    <div class="tr-item">
+                        <div class="tr-info">
+                            <strong>${t.categoryName || 'Без категории'}</strong>
+                            <div style="font-size: 0.75rem; color: #0084ff;">${t.accountName}</div>
+                            <small>${new Date(t.createdTime).toLocaleDateString()}</small>
+                        </div>
+                        <span class="${t.type === 2 ? 'tr-amount-neg' : 'tr-amount-pos'}">
+                            ${t.type === 2 ? '-' : '+'}${t.value.toLocaleString()} ₽
+                        </span>
+                    </div>`).join('') : '<p class="text-center text-muted p-5">Транзакций не найдено</p>'}
+            </div>
+        `;
+    } catch (e) { console.error("Ошибка дашборда:", e); area.innerHTML = "<h2>Ошибка загрузки данных</h2>"; }
 }
 
-// Функция обновления фильтра
-function changeGlobalFilter(month, year) {
-    if (month !== null) {
-        // Если выбрано "Все месяцы", значение будет -1
-        currentFilterMonth = parseInt(month);
-    }
+// Для выпадающих списков
+function changeGlobalFilter(month, year, category) {
+    if (month !== null) currentFilterMonth = parseInt(month);
     if (year !== null) currentFilterYear = parseInt(year);
+    if (category !== null) currentFilterCategory = category;
     showTotalDashboard();
 }
+
+// Для кликов по карточкам Доходы/Расходы
+function toggleTypeFilter(type) {
+    currentFilterType = (currentFilterType === type) ? 0 : type;
+    currentFilterCategory = "all";
+    showTotalDashboard();
+}
+
 
 loadTotalBalance();
 
