@@ -600,6 +600,22 @@
                 transform: scale(1.02);
                 box-shadow: 0 4px 15px rgba(0, 132, 255, 0.3) !important;
             }
+
+        .chart-container {
+            height: 35px;
+            display: flex; /* Важно: элементы выстраиваются в ряд */
+            border-radius: 12px;
+            overflow: hidden;
+            background: #f0f2f5;
+            margin: 20px 0;
+            width: 100%; /* Занимает всю ширину карточки */
+        }
+
+        .chart-segment {
+            height: 100%;
+            /* Убираем фиксированную ширину, она придет из JS */
+            transition: width 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
     </style>
 </head>
 <body>

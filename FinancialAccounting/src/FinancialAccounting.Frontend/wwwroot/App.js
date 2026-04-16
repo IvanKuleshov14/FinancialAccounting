@@ -1304,6 +1304,93 @@ async function loadTotalBalance() {
     }
 }
 
+async function showTotalDashboard() {
+    const area = document.getElementById('details-area');
+    area.innerHTML = '<div class="text-center mt-5">Считаем доли счетов...</div>';
+
+    try {
+        // 1. Загружаем счета (для диаграммы) и транзакции (для сводки)
+        const [accRes, txRes] = await Promise.all([
+            fetch(`${API_URL}/Accounts`),
+            fetch(`${API_URL}/Transactions?page=1&limit=50`)
+        ]);
+
+        const accounts = await accRes.json();
+        const txs = await txRes.json();
+
+        // 2. Расчеты для диаграммы
+        const totalSum = accounts.reduce((sum, acc) => sum + acc.total, 0);
+        const colors = ['#0084ff', '#28a745', '#ffc107', '#17a2b8', '#6610f2', '#fd7e14']; // Цвета для сегментов
+
+        // 3. Расчеты для сводки
+        const income = txs.filter(t => t.type === 1).reduce((sum, t) => sum + t.value, 0);
+        const expense = txs.filter(t => t.type === 2).reduce((sum, t) => sum + t.value, 0);
+
+        area.innerHTML = `
+    <h1 class="mb-4">Общий обзор</h1>
+    
+    <div class="form-card" style="margin-bottom: 30px;">
+        <h5 class="mb-3">Распределение средств по счетам</h5>
+        <div class="chart-container">
+            ${accounts.map((acc, i) => {
+            // Высчитываем процент от общей суммы
+            const share = totalSum > 0 ? (acc.total / totalSum) * 100 : 0;
+
+            // Если денег на счету 0, этот сегмент вообще не рисуем
+            if (share <= 0) return '';
+
+            return `
+                    <div class="chart-segment" 
+                         style="width: ${share.toFixed(2)}%; background: ${colors[i % colors.length]};" 
+                         title="${acc.name}: ${Math.round(share)}%">
+                    </div>`;
+        }).join('')}
+        </div>
+                <!-- Легенда под диаграммой -->
+                <div style="display: flex; flex-wrap: wrap; gap: 15px; margin-top: 10px;">
+                    ${accounts.map((acc, i) => `
+                        <div style="display: flex; align-items: center; gap: 5px; font-size: 0.8rem;">
+                            <div style="width: 10px; height: 10px; border-radius: 2px; background: ${colors[i % colors.length]};"></div>
+                            <span>${acc.name}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+
+            <!-- Статистические карточки (как были) -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 40px;">
+                <div class="form-card" style="border-left: 5px solid #28a745; margin: 0;">
+                    <small class="text-muted text-uppercase">Доходы (лента)</small>
+                    <div style="font-size: 1.5rem; font-weight: bold; color: #28a745;">+${income.toLocaleString()} ₽</div>
+                </div>
+                <div class="form-card" style="border-left: 5px solid #dc3545; margin: 0;">
+                    <small class="text-muted text-uppercase">Расходы (лента)</small>
+                    <div style="font-size: 1.5rem; font-weight: bold; color: #dc3545;">-${expense.toLocaleString()} ₽</div>
+                </div>
+            </div>
+
+            <h4 class="section-title">Единая лента операций</h4>
+            <div id="global-transactions-list">
+                ${txs.map(t => `
+                    <div class="tr-item">
+                        <div class="tr-info">
+                            <strong>${t.categoryName || 'Без категории'}</strong>
+                            <div style="font-size: 0.8rem; color: #0084ff;">Счет: ${t.accountName}</div>
+                            ${t.description ? `<span class="tr-desc">${t.description}</span>` : ''}
+                            <small style="color: #bcc0c4;">${new Date(t.createdTime).toLocaleDateString()}</small>
+                        </div>
+                        <span class="${t.type === 2 ? 'tr-amount-neg' : 'tr-amount-pos'}">
+                            ${t.type === 2 ? '-' : '+'}${t.value.toLocaleString()} ₽
+                        </span>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    } catch (e) {
+        area.innerHTML = "<h2>Ошибка загрузки аналитики</h2>";
+    }
+}
+
 loadTotalBalance();
 
 // Вызови эту функцию в самом конце app.js, чтобы она работала при старте
