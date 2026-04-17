@@ -1457,7 +1457,6 @@ function toggleTypeFilter(type) {
     showTotalDashboard();
 }
 
-
 loadTotalBalance();
 loadTargets();
 loadAccounts();
