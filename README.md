@@ -3,6 +3,7 @@
 FinancialAccounting — это легкое и функциональное SPA-приложение для управления личными финансами.
 Проект построен на принципах Clean Architecture и ориентирован на детальную аналитику и удобное управление накоплениями без использования тяжелых фронтенд-фреймворков
 
+<img width="1920" height="1080" alt="GIF_FA_high_30_1x" src="https://github.com/user-attachments/assets/91dce7cc-e06b-4edb-bb8d-3ce3fac6b5a1" />
 
 🚀 Основные возможности
 ---
@@ -71,7 +72,7 @@ Frontend:
 
 🛠 Установка и запуск
 ---
-- Требования
+Требования:
 - .NET 10 SDK
 - MS SQL Server (LocalDB)
 
