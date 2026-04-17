@@ -1,6 +1,5 @@
 ﻿using FinancialAccounting.Entities.Accounts;
 using FinancialAccounting.Entities.Categories;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace FinancialAccounting.Entities.Transactions;
 
