@@ -35,10 +35,6 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Configurations
                 Property(t => t.CreatedTime).
                 HasDefaultValueSql("CURRENT_TIMESTAMP");
 
-            //builder.
-            //    Property(t => t.CreatedDay).
-            //    IsRequired();
-
             builder.
                 Property(t => t.Type).
                 HasConversion<int>();

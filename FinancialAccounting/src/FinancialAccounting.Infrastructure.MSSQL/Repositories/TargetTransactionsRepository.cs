@@ -2,7 +2,6 @@
 using FinancialAccounting.Entities.TargetTransactions;
 using FinancialAccounting.Infrastructure.MSSQL.Data;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Identity.Client;
 
 namespace FinancialAccounting.Infrastructure.MSSQL.Repositories
 {
