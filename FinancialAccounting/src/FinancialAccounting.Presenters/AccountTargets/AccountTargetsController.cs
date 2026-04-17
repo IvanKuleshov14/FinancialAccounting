@@ -1,7 +1,4 @@
-﻿using FinancialAccounting.Application.AccountTargets;
-using FinancialAccounting.Application.AccountTargets.Interfaces;
-using FinancialAccounting.Entities.Accounts;
-using FinancialAccouting.Contracts;
+﻿using FinancialAccounting.Application.AccountTargets.Interfaces;
 using FinancialAccouting.Contracts.AccountTargets;
 using Microsoft.AspNetCore.Mvc;
 
