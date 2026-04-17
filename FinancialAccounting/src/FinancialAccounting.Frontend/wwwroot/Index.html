@@ -5,7 +5,6 @@
     <title>Личные финансы</title>
     <link rel="icon" href="favicon.png">
     <style>
-        /* БАЗОВЫЕ СБРОСЫ */
         * {
             box-sizing: border-box;
             margin: 0;
@@ -24,21 +23,18 @@
             overflow: hidden;
         }
 
-        /* ЛЕВАЯ ПАНЕЛЬ (САЙДБАР) */
         #sidebar {
             width: 320px;
             min-width: 320px;
             background: #fff;
             border-right: 1px solid #e0e0e0;
             padding: 20px;
-            /* ВОТ ЭТИ СТРОКИ ИСПРАВЯТ ВСЁ: */
-            height: 100vh; /* Сайдбар всегда равен высоте окна */
-            overflow-y: auto; /* Появится скролл, если счетов станет много */
+            height: 100vh;
+            overflow-y: auto; 
             display: flex;
             flex-direction: column;
         }
 
-            /* Чтобы скроллбар выглядел аккуратно (тоненький) */
             #sidebar::-webkit-scrollbar {
                 width: 6px;
             }
@@ -60,7 +56,6 @@
             margin: 20px 0 10px;
         }
 
-        /* КАРТОЧКИ В САЙДБАРЕ */
         .card {
             background: #fff;
             border: 1px solid #e0e0e0;
@@ -86,7 +81,6 @@
             color: #0084ff;
         }
 
-        /* ПРАВАЯ ЧАСТЬ */
         #main-content {
             flex-grow: 1;
             padding: 40px;
@@ -100,7 +94,6 @@
             max-width: 600px;
         }
 
-        /* ТРАНЗАКЦИИ */
         .tr-item {
             background: #fff;
             padding: 15px;
@@ -122,7 +115,6 @@
             font-weight: bold;
         }
 
-        /* ФОРМА */
         .form-card {
             background: #fff;
             padding: 30px;
@@ -202,9 +194,6 @@
             position: relative;
         }
 
-
-        /* Чтобы кнопка позиционировалась внутри */
-
         .btn-delete {
             position: absolute;
             top: 10px;
@@ -241,9 +230,8 @@
                 transform: scale(1.1);
             }
 
-        /* Стиль для инпута редактирования прямо в заголовке */
         .edit-input {
-            font-size: 2rem; /* Чтобы совпадало с h1 */
+            font-size: 2rem;
             font-weight: bold;
             border: 1px solid #0084ff;
             border-radius: 8px;
@@ -261,7 +249,7 @@
         .edit-group {
             display: flex;
             align-items: center;
-            gap: 8px; /* Расстояние между галочкой и крестиком */
+            gap: 8px; 
             height: 100%;
         }
 
@@ -274,7 +262,7 @@
             padding: 0;
             margin: 0;
             cursor: pointer;
-            line-height: 1; /* Убираем лишнюю высоту строки */
+            line-height: 1; 
         }
 
         .edit-input {
@@ -283,17 +271,15 @@
             border: 2px solid #0084ff;
             border-radius: 8px;
             padding: 4px 12px;
-            line-height: 1.2; /* Чтобы текст внутри был по центру */
+            line-height: 1.2; 
             outline: none;
         }
 
-        /* Контейнер для меню */
         .dropdown {
             position: relative;
             display: inline-block;
         }
 
-        /* Кнопка три точки */
         .btn-more {
             background: none;
             border: none;
@@ -309,7 +295,6 @@
                 color: #333;
             }
 
-        /* Само выпадающее меню */
         .dropdown-content {
             display: none;
             position: absolute;
@@ -331,7 +316,7 @@
                 background: none;
                 text-align: left;
                 cursor: pointer;
-                color: #dc3545; /* Красный для удаления */
+                color: #dc3545; 
                 font-weight: bold;
             }
 
@@ -339,7 +324,6 @@
                     background-color: #fff5f5;
                 }
 
-        /* Показать меню при добавлении класса */
         .show {
             display: block;
         }
@@ -377,13 +361,13 @@
             background: #eef0f2;
             border-radius: 10px;
             margin-top: 12px;
-            overflow: hidden; /* Чтобы углы бара не вылезали */
+            overflow: hidden; 
         }
 
         .progress-bar {
             height: 100%;
-            background: linear-gradient(90deg, #0084ff, #00c6ff); /* Красивый градиент */
-            transition: width 0.5s ease-in-out; /* Плавная анимация при загрузке */
+            background: linear-gradient(90deg, #0084ff, #00c6ff); 
+            transition: width 0.5s ease-in-out;
         }
 
         .target-info {
@@ -419,23 +403,21 @@
             display: flex !important;
             flex-direction: row !important;
             gap: 8px !important;
-            align-items: stretch !important; /* Чтобы кнопка была одной высоты с полем */
+            align-items: stretch !important; 
             margin-bottom: 15px;
         }
 
-        /* Настройка самого выпадающего списка */
         #category-select {
-            flex-grow: 1 !important; /* Занимает всё свободное место */
-            margin-bottom: 0 !important; /* Убираем нижний отступ, который всё ломает */
+            flex-grow: 1 !important; 
+            margin-bottom: 0 !important; 
         }
 
-        /* Кнопка "плюс" */
         .btn-inline-add {
             display: flex;
             align-items: center;
             justify-content: center;
             width: 45px;
-            height: 45px; /* Совпадает с высотой инпута */
+            height: 45px; 
             background: #e7f3ff;
             color: #0084ff;
             border: 1px solid #cce4ff;
@@ -443,7 +425,7 @@
             cursor: pointer;
             font-size: 1.5rem;
             padding: 0;
-            flex-shrink: 0; /* Чтобы кнопка не сжималась */
+            flex-shrink: 0;
         }
 
             .btn-inline-add:hover {
@@ -493,7 +475,7 @@
 
         .target-card-wrapper {
             position: relative !important;
-            padding-top: 40px !important; /* Даем место для иконки сверху */
+            padding-top: 40px !important; 
         }
 
         .btn-delete-target {
@@ -502,7 +484,7 @@
             right: 15px !important;
             background: none !important;
             border: none !important;
-            color: #dc3545 !important; /* Яркий красный */
+            color: #dc3545 !important; 
             cursor: pointer !important;
             font-size: 1.4rem !important;
             padding: 5px !important;
@@ -518,7 +500,6 @@
         .tr-item {
             position: relative;
         }
-        /* Для позиционирования крестика */
 
         .btn-delete-small {
             position: absolute;
@@ -539,7 +520,6 @@
                 transform: scale(1.2);
             }
 
-        /* Стили для формы пополнения копилки */
         #type-dep-inc:checked + label {
             background-color: #f1fdf7 !important;
             border-color: #28a745 !important;
@@ -556,29 +536,25 @@
             box-shadow: 0 2px 8px rgba(220, 53, 69, 0.2);
         }
 
-        /* Общий стиль для кнопок-переключателей, чтобы они выглядели кликабельно */
         .type-btn {
             transition: all 0.2s ease;
             border: 2px solid #eee;
         }
 
-        /* Подсветка для кнопки "Положить" (когда радио-кнопка выбрана) */
         #type-dep-inc:checked + label {
-            background-color: #f1fdf7 !important; /* Нежно-зеленый фон */
+            background-color: #f1fdf7 !important; 
             border-color: #28a745 !important;
             color: #28a745 !important;
             font-weight: bold;
         }
 
-        /* Подсветка для кнопки "Забрать" (когда радио-кнопка выбрана) */
         #type-dep-exp:checked + label {
-            background-color: #fff5f5 !important; /* Нежно-красный фон */
+            background-color: #fff5f5 !important; 
             border-color: #dc3545 !important;
             color: #dc3545 !important;
             font-weight: bold;
         }
 
-        /* Эффект при наведении, чтобы было понятно, что на кнопку можно нажать */
         .type-btn:hover {
             background-color: #f8f9fa;
             border-color: #ddd;
@@ -604,17 +580,16 @@
 
         .chart-container {
             height: 35px;
-            display: flex; /* Важно: элементы выстраиваются в ряд */
+            display: flex; 
             border-radius: 12px;
             overflow: hidden;
             background: #f0f2f5;
             margin: 20px 0;
-            width: 100%; /* Занимает всю ширину карточки */
+            width: 100%; 
         }
 
         .chart-segment {
             height: 100%;
-            /* Убираем фиксированную ширину, она придет из JS */
             transition: width 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
@@ -659,18 +634,18 @@
 
         .history-header {
             display: flex;
-            align-items: center; /* Центрируем всё по вертикали */
-            gap: 15px; /* Расстояние между текстом и селекторами */
+            align-items: center; 
+            gap: 15px; 
             margin-bottom: 20px;
             margin-top: 10px;
         }
 
             .history-header h4 {
                 margin: 0;
-                white-space: nowrap; /* Чтобы заголовок не переносился */
+                white-space: nowrap; 
             }
 
-        /* Компактные селекторы */
+        
         .select-inline {
             padding: 4px 8px;
             border-radius: 6px;
@@ -695,7 +670,6 @@
             </div>
             <div id="accounts-list"></div>
 
-            <!-- Аналогично можно сделать для Копилок чуть позже -->
             <div class="section-header">
                 <div class="section-title" style="margin:0;">Копилки</div>
                 <button class="btn-add-section" onclick="showCreateTargetForm()">+</button>
