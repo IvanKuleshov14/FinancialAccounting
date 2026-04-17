@@ -1,7 +1,6 @@
 ﻿using FinancialAccounting.Entities.TargetTransactions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using FinancialAccounting.Entities.Targets;
 
 namespace FinancialAccounting.Infrastructure.MSSQL.Configurations
 {

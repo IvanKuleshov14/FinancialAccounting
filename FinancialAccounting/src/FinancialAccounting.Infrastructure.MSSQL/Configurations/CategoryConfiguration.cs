@@ -1,5 +1,4 @@
 ﻿using FinancialAccounting.Entities.Categories;
-using FinancialAccounting.Entities.Transactions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 

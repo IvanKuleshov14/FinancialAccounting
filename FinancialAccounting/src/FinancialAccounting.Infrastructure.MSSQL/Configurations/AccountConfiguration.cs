@@ -2,9 +2,6 @@
 using FinancialAccounting.Entities.Users;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace FinancialAccounting.Infrastructure.MSSQL.Configurations
 {
@@ -15,6 +12,7 @@ namespace FinancialAccounting.Infrastructure.MSSQL.Configurations
             builder.
                 HasKey(a => a.Id);
 
+            // Для дальнейшей авторизации
             //builder.
             //    HasOne<User>().
             //    WithMany().

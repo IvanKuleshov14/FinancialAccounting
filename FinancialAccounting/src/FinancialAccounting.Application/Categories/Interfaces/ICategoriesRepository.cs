@@ -1,5 +1,4 @@
 ﻿using FinancialAccounting.Entities.Categories;
-using FinancialAccouting.Contracts.Categories;
 
 namespace FinancialAccounting.Application.Categories.Interfaces
 {

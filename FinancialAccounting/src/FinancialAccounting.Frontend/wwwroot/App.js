@@ -1,6 +1,6 @@
 ﻿const API_URL = 'https://localhost:7249';
 
-// Загрузка счетов в сайдбар
+// Счета в левом сайдбаре
 async function loadAccounts() {
     const res = await fetch(`${API_URL}/Accounts`);
     const data = await res.json();
@@ -14,9 +14,8 @@ async function loadAccounts() {
     }
 
     list.innerHTML = data.map(acc => {
-        // Используем TargetProgress напрямую из твоего DTO
         const progressValue = acc.targetProgress || 0;
-        const barWidth = Math.min(progressValue, 100); // Чтобы бар не улетел за 100%
+        const barWidth = Math.min(progressValue, 100);
 
         return `
         <div class="card" onclick="showAccount('${acc.id}', '${acc.name}')">
@@ -40,13 +39,12 @@ async function loadAccounts() {
     }).join('');
 }
 
-// Показ истории транзакций
+// Детализация счета
 async function showAccount(id, name) {
     const area = document.getElementById('details-area');
     area.innerHTML = '<div style="text-align:center; margin-top:50px;">Загрузка...</div>';
 
     try {
-        // 1. Подгружаем категории по текущему типу для этого счета
         let catUrl = `${API_URL}/Categories`;
         if (currentFilterType !== 0) catUrl += `?type=${currentFilterType}`;
 
@@ -60,7 +58,6 @@ async function showAccount(id, name) {
         const allTxs = await txRes.json();
         const categories = await catRes.json();
 
-        // 2. Считаем статистику за выбранный период (для карточек)
         const periodTxs = allTxs.filter(t => {
             const d = new Date(t.createdTime);
             const m = currentFilterMonth === -1 || d.getMonth() === currentFilterMonth;
@@ -71,7 +68,6 @@ async function showAccount(id, name) {
         const incomeSum = periodTxs.filter(t => t.type === 1).reduce((sum, t) => sum + t.value, 0);
         const expenseSum = periodTxs.filter(t => t.type === 2).reduce((sum, t) => sum + t.value, 0);
 
-        // 3. Фильтруем список транзакций (учитываем тип и категорию)
         const filteredTxs = periodTxs.filter(t => {
             const tMatch = currentFilterType === 0 || t.type === currentFilterType;
             const cMatch = currentFilterCategory === "all" || t.categoryName === currentFilterCategory;
@@ -97,7 +93,6 @@ async function showAccount(id, name) {
                 </div>
             </div>
 
-            <!-- КЛИКАБЕЛЬНЫЕ КАРТОЧКИ СЧЕТА -->
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 30px;">
                 <div class="form-card" onclick="toggleAccountTypeFilter('${id}', '${name}', 1)" 
                      style="border-left: 5px solid #28a745; cursor: pointer; border: ${currentFilterType === 1 ? '2px solid #28a745' : '1px solid #eee'}; background: ${currentFilterType === 1 ? '#f1fdf7' : 'white'}; padding: 15px; margin:0;">
@@ -111,7 +106,6 @@ async function showAccount(id, name) {
                 </div>
             </div>
 
-            <!-- ФИЛЬТРЫ В РЯД -->
             <div style="display: flex !important; justify-content: space-between !important; align-items: center !important; margin: 25px 0 15px 0 !important; width: 100% !important; min-height: 40px !important;">
     <h4 style="margin: 0 !important; font-size: 1.1rem; white-space: nowrap !important; display: flex !important; align-items: center !important;">
         ${currentFilterType === 0 ? 'История операций' : currentFilterType === 1 ? 'Только доходы' : 'Только расходы'}
@@ -158,7 +152,7 @@ async function showAccount(id, name) {
     } catch (e) { console.error(e); area.innerHTML = "<h2>Ошибка загрузки счета</h2>"; }
 }
 
-// Вспомогательная функция (обязательно добавь её в app.js)
+// Фильтры для детализации счета
 function changeAccountFilter(id, name, month, year, category) {
     if (month !== null) currentFilterMonth = parseInt(month);
     if (year !== null) currentFilterYear = parseInt(year);
@@ -166,32 +160,19 @@ function changeAccountFilter(id, name, month, year, category) {
     showAccount(id, name);
 }
 
-// Фильтр через клик по карточкам
+// Фильтр через клик по карточкам сумм транзакций (доходы и расходы)
 function toggleAccountTypeFilter(id, name, type) {
     currentFilterType = (currentFilterType === type) ? 0 : type;
-    currentFilterCategory = "all"; // Сбрасываем категорию при смене типа
+    currentFilterCategory = "all";
     showAccount(id, name);
 }
 
-// Вспомогательная функция для баджа (вынесли для чистоты)
-async function updateTargetBadge(id) {
-    try {
-        const res = await fetch(`${API_URL}/Accounts/${id}`);
-        const acc = await res.json();
-        const badge = document.getElementById('account-target-badge');
-        //if (acc.targetName && badge) {
-        //    badge.innerHTML = `<div style="font-size: 0.9rem; color: #65676b; margin-top: 5px;">🎯 Цель: <strong>${acc.targetName}</strong> (${Math.round(acc.targetProgress)}%)</div>`;
-        //}
-    } catch (e) { }
-}
+let allCategories = [];
 
 // Форма создания транзакции
-let allCategories = []; // Глобальная переменная для хранения категорий
-
 async function showForm(accountId, accountName) {
     const area = document.getElementById('details-area');
 
-    // 1. Загружаем категории, если еще не загрузили
     try {
         const catRes = await fetch(`${API_URL}/Categories`);
     } catch (e) {
@@ -203,7 +184,6 @@ async function showForm(accountId, accountName) {
             <h2 style="text-align:center; margin-bottom:20px;">Новая транзакция</h2>
             <h4 style="text-align:center; color:#0084ff; margin-bottom:20px;">${accountName}</h4>
             
-            <!-- Переключатель типа с вызовом фильтрации -->
             <div class="type-selector">
                 <input type="radio" name="trType" id="type-exp" value="2" checked onchange="updateCategoryList(2)">
                 <label class="type-btn" for="type-exp">Расход</label>
@@ -217,12 +197,9 @@ async function showForm(accountId, accountName) {
             
             <label class="section-title">Категория:</label>
 <div class="input-row" style="display: flex; gap: 8px; align-items: center;">
-    <!-- Выпадающий список забирает всё свободное место -->
     <select id="category-select" style="flex-grow: 1; height: 45px; margin: 0;">
-        <!-- Загрузится динамически -->
     </select>
 
-    <!-- Кнопка РЕДАКТИРОВАНИЯ (с отступом справа) -->
     <button type="button" class="btn-inline-add"
             onclick="showEditCategoryForm('${accountId}', '${accountName}')" 
             style="
@@ -233,7 +210,6 @@ async function showForm(accountId, accountName) {
                 width: 45px; height: 45px; flex-shrink: 0;
             " title="Редактировать категорию">✎</button>
 
-    <!-- Кнопка ДОБАВЛЕНИЯ новой (стоит чуть поодаль) -->
     <button type="button" class="btn-inline-add" 
             onclick="showCreateCategoryForm('${accountId}', '${accountName}')" 
             style="
@@ -262,8 +238,6 @@ async function updateCategoryList(type) {
     if (!select) return;
 
     try {
-        // Делаем запрос к твоему методу, передавая тип (1 или 2)
-        // Проверь, как именно в контроллере прописан маршрут (query string или route)
         const res = await fetch(`${API_URL}/Categories?type=${type}`);
         const categories = await res.json();
 
@@ -281,7 +255,7 @@ async function updateCategoryList(type) {
 }
 
 // Сохранение транзакции
-async function saveTransaction(accountId, accountName) { // Добавили accountName
+async function saveTransaction(accountId, accountName) {
     const valInput = document.getElementById('amount').value;
     const typeInput = document.querySelector('input[name="trType"]:checked').value;
     const catInput = document.getElementById('category-select').value;
@@ -307,14 +281,12 @@ async function saveTransaction(accountId, accountName) { // Добавили acc
             body: JSON.stringify(payload)
         });
 
-        // ВАЖНО: Мы вызываем возврат в обоих случаях, если транзакция прошла
         if (res.ok) {
             await loadAccounts();
             await loadTotalBalance();
-            showAccount(accountId, accountName); // Возвращаемся, используя переданное имя
+            showAccount(accountId, accountName);
         }
     } catch (e) {
-        // Если была ошибка сети (CORS), но данные ушли
         await loadAccounts();
         await loadTotalBalance();
         showAccount(accountId, accountName);
@@ -325,11 +297,9 @@ async function saveTransaction(accountId, accountName) { // Добавили acc
 async function showTransferForm(fromId, fromName) {
     const area = document.getElementById('details-area');
 
-    // Загружаем список всех счетов для выбора "Куда"
     const res = await fetch(`${API_URL}/Accounts`);
     const accounts = await res.json();
 
-    // Исключаем текущий счет из списка "Куда"
     const targetAccounts = accounts.filter(a => a.id !== fromId);
 
     area.innerHTML = `
@@ -365,12 +335,12 @@ async function submitTransfer(fromId, fromName) {
         fromAccountId: fromId,
         toAccountId: toId,
         value: parseFloat(val),
-        createdDay: new Date().toISOString().split('T')[0], // Твой DateOnly
+        createdDay: new Date().toISOString().split('T')[0], 
         description: desc || "Внутренний перевод"
     };
 
     try {
-        const res = await fetch(`${API_URL}/Transactions/transfers`, { // Уточни путь к методу трансфера!
+        const res = await fetch(`${API_URL}/Transactions/transfers`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
@@ -385,7 +355,6 @@ async function submitTransfer(fromId, fromName) {
             alert("Ошибка: " + err);
         }
     } catch (e) {
-        // Обработка CORS если нужно
         await loadAccounts();
         await loadTotalBalance();
         showAccount(fromId, fromName);
@@ -402,7 +371,6 @@ async function deleteTransaction(transactionId, accountId, accountName) {
         });
 
         if (res.ok) {
-            // Обновляем всё: и баланс в сайдбаре, и список транзакций
             await loadAccounts();
             await loadTotalBalance();
             showAccount(accountId, accountName);
@@ -411,7 +379,6 @@ async function deleteTransaction(transactionId, accountId, accountName) {
             alert("Не удалось удалить: " + err);
         }
     } catch (e) {
-        // Обработка CORS или ошибок сети (как в сохранении)
         console.error(e);
         await loadAccounts();
         await loadTotalBalance();
@@ -434,7 +401,7 @@ function enableEditAccount(id, oldName) {
     `;
 
     document.getElementById('btn-save-name').onclick = (e) => {
-        e.stopPropagation(); // На всякий случай прерываем всплытие
+        e.stopPropagation();
         saveAccountName(id);
     };
 
@@ -448,7 +415,7 @@ function enableEditAccount(id, oldName) {
     input.select();
 }
 
-//Редактирование названия счета
+//Сохранение имени счета
 async function saveAccountName(id) {
     const newName = document.getElementById('edit-acc-name').value;
     if (!newName) return;
@@ -457,19 +424,18 @@ async function saveAccountName(id) {
         const res = await fetch(`${API_URL}/accounts/${id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name: newName }) // Твой UpdateAccountDto
+            body: JSON.stringify({ name: newName }) 
         });
 
         if (res.ok) {
-            await loadAccounts(); // Обновляем сайдбар
+            await loadAccounts(); 
             await loadTotalBalance();
-            showAccount(id, newName); // Обновляем заголовок
+            showAccount(id, newName); 
         } else {
             alert("Ошибка при обновлении имени");
         }
     } catch (e) {
         console.error(e);
-        // Обработка CORS если нужно
         await loadAccounts();
         await loadTotalBalance();
         showAccount(id, newName);
@@ -494,7 +460,7 @@ window.onclick = function (event) {
     }
 }
 
-// Функция удаления счета
+// Удаление счета
 async function deleteAccount(id) {
     if (!confirm("Вы уверены, что хотите удалить этот счет со всеми транзакциями? Это действие нельзя отменить.")) return;
 
@@ -504,7 +470,7 @@ async function deleteAccount(id) {
         });
 
         if (res.ok) {
-            await loadAccounts(); // Обновляем сайдбар
+            await loadAccounts();
             await loadTotalBalance();
             document.getElementById('details-area').innerHTML = `
                 <div style="text-align: center; color: #888; margin-top: 100px;">
@@ -518,12 +484,11 @@ async function deleteAccount(id) {
         console.error(e);
         await loadAccounts();
         await loadTotalBalance();
-        // Если перенаправление на главную после удаления
         location.reload();
     }
 }
 
-// Показать форму создания счета
+// Форма создания счета
 function showCreateAccountForm() {
     const area = document.getElementById('details-area');
     area.innerHTML = `
@@ -551,7 +516,6 @@ async function submitCreateAccount() {
 
     const payload = {
         name: nameInput.value.trim(),
-        // Используем случайный валидный GUID вместо нулей
         userId: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
         total: parseFloat(totalInput.value) || 0
     };
@@ -564,14 +528,12 @@ async function submitCreateAccount() {
         });
 
         if (res.ok) {
-            // Если твой контроллер возвращает Created/Ok с объектом
             try {
                 const createdAccount = await res.json();
                 await loadAccounts();
                 await loadTotalBalance();
                 showAccount(createdAccount.id, createdAccount.name);
             } catch {
-                // Если контроллер вернул успех, но без тела (пустой Ok)
                 await loadAccounts();
                 await loadTotalBalance();
                 document.getElementById('details-area').innerHTML = "<h2>Счет создан</h2>";
@@ -596,11 +558,9 @@ async function showAccountTargetForm(accountId, accountName) {
         const res = await fetch(`${API_URL}/Accounts/${accountId}`);
         const acc = await res.json();
 
-        // Если TargetName пустой — рисуем форму СОЗДАНИЯ
         if (!acc.targetName) {
             renderCreateTargetForm(accountId, accountName);
         } else {
-            // Если цель есть — рисуем ДЕТАЛИЗАЦИЮ
             renderTargetDetailsCard(acc);
         }
     } catch (e) {
@@ -632,7 +592,6 @@ function renderTargetDetailsCard(acc) {
     area.innerHTML = `
         <div class="form-card" style="position: relative !important; padding-top: 50px !important;">
             
-            <!-- КНОПКА УДАЛЕНИЯ: Жесткое позиционирование через inline-style -->
             <button onclick="deleteAccountTarget('${acc.accountTargetId}', '${acc.id}', '${acc.name}')" 
     style="
         position: absolute !important;
@@ -706,7 +665,7 @@ async function submitAccountTarget(accountId, accountName) {
         });
 
         if (res.ok) {
-            await loadAccounts(); // Обновит прогресс-бар в сайдбаре
+            await loadAccounts(); 
             await loadTotalBalance();
             showAccount(accountId, accountName);
         } else {
@@ -730,24 +689,23 @@ async function deleteAccountTarget(targetId, accountId, accountName) {
         });
 
         if (res.ok) {
-            await loadAccounts(); // Чтобы убрать бар из сайдбара
+            await loadAccounts(); 
             await loadTotalBalance();
-            showAccount(accountId, accountName); // Возвращаемся в детали счета
+            showAccount(accountId, accountName);
         } else {
             alert("Ошибка при удалении цели с сервера");
         }
     } catch (e) {
         console.error(e);
-        // Fallback для CORS
         await loadAccounts();
         await loadTotalBalance();
         showAccount(accountId, accountName);
     }
 }
 
+// Форма создания категории
 function showCreateCategoryForm(accountId, accountName) {
     const area = document.getElementById('details-area');
-    // Определяем текущий тип из радио-кнопок (1 или 2)
     const currentType = parseInt(document.querySelector('input[name="trType"]:checked').value);
     const typeText = currentType === 1 ? "доход" : "расход";
 
@@ -765,13 +723,14 @@ function showCreateCategoryForm(accountId, accountName) {
     `;
 }
 
+// Сохранение категории
 async function submitCreateCategory(accountId, accountName, type) {
     const name = document.getElementById('new-cat-name').value;
     if (!name) return alert("Введите название");
 
     const payload = {
         name: name,
-        type: type // 1 для дохода, 2 для расхода
+        type: type 
     };
 
     try {
@@ -782,9 +741,7 @@ async function submitCreateCategory(accountId, accountName, type) {
         });
 
         if (res.ok) {
-            // Возвращаемся в форму транзакции
             showForm(accountId, accountName);
-            // После отрисовки формы нужно принудительно обновить список категорий для текущего типа
             setTimeout(() => updateCategoryList(type), 100);
         } else {
             alert("Ошибка при создании категории");
@@ -795,6 +752,7 @@ async function submitCreateCategory(accountId, accountName, type) {
     }
 }
 
+// Удаление категории
 async function deleteCurrentCategory(accountId, accountName) {
     const select = document.getElementById('category-select');
     const categoryId = select.value;
@@ -822,6 +780,7 @@ async function deleteCurrentCategory(accountId, accountName) {
     }
 }
 
+// Форма редактирования цели
 function showEditTargetForm(accountId, accountName, oldName, oldGoal, targetId) {
     const area = document.getElementById('details-area');
     area.innerHTML = `
@@ -840,6 +799,7 @@ function showEditTargetForm(accountId, accountName, oldName, oldGoal, targetId) 
     `;
 }
 
+// Сохранение редактирования цели
 async function submitUpdateTarget(targetId, accountId, accountName) {
     const newName = document.getElementById('edit-target-name').value;
     const newGoal = document.getElementById('edit-target-goal').value;
@@ -859,9 +819,9 @@ async function submitUpdateTarget(targetId, accountId, accountName) {
         });
 
         if (res.ok) {
-            await loadAccounts(); // Чтобы обновился сайдбар
+            await loadAccounts(); 
             await loadTotalBalance();
-            showAccount(accountId, accountName); // Возвращаемся в счет
+            showAccount(accountId, accountName); 
         } else {
             alert("Ошибка при обновлении цели");
         }
@@ -873,6 +833,7 @@ async function submitUpdateTarget(targetId, accountId, accountName) {
     }
 }
 
+// Форма редактирования категории
 function showEditCategoryForm(accountId, accountName) {
     const select = document.getElementById('category-select');
     const categoryId = select.value;
@@ -891,7 +852,6 @@ function showEditCategoryForm(accountId, accountName) {
             <div style="display: flex; gap: 10px; margin-top: 20px;">
                 <button class="btn-submit" onclick="submitUpdateCategory('${categoryId}', '${accountId}', '${accountName}')">Сохранить</button>
                 
-                <!-- Кнопка удаления внутри формы -->
                 <button class="btn-submit" style="background: #fff5f5; color: #dc3545; border: 1px solid #ffc1c1; width: 60px;" 
                         onclick="deleteCurrentCategoryConfirm('${categoryId}', '${accountId}', '${accountName}')" title="Удалить">🗑</button>
             </div>
@@ -901,7 +861,7 @@ function showEditCategoryForm(accountId, accountName) {
     `;
 }
 
-// 1. Метод PUT для изменения имени
+// Сохранение редактированной категории
 async function submitUpdateCategory(categoryId, accountId, accountName) {
     const newName = document.getElementById('edit-cat-name').value;
     if (!newName) return alert("Введите название");
@@ -910,7 +870,7 @@ async function submitUpdateCategory(categoryId, accountId, accountName) {
         const res = await fetch(`${API_URL}/Categories/${categoryId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name: newName }) // Твой UpdateCategoryDto
+            body: JSON.stringify({ name: newName })
         });
 
         if (res.ok) {
@@ -919,7 +879,7 @@ async function submitUpdateCategory(categoryId, accountId, accountName) {
     } catch (e) { console.error(e); showForm(accountId, accountName); }
 }
 
-// 2. Метод DELETE для Soft Delete
+// Удаление категории
 async function deleteCurrentCategoryConfirm(categoryId, accountId, accountName) {
     if (!confirm("Скрыть эту категорию из списка?")) return;
 
@@ -934,13 +894,13 @@ async function deleteCurrentCategoryConfirm(categoryId, accountId, accountName) 
     } catch (e) { console.error(e); showForm(accountId, accountName); }
 }
 
+// Цели в левом сайдбаре
 async function loadTargets() {
     try {
         const res = await fetch(`${API_URL}/Targets`);
         const targets = await res.json();
         const list = document.getElementById('targets-list');
 
-        // Очищаем список перед загрузкой
         list.innerHTML = '';
 
         if (targets.length === 0) {
@@ -949,7 +909,6 @@ async function loadTargets() {
         }
 
         list.innerHTML = targets.map(t => {
-            // Используем Progress из твоего DTO (предполагаем, что это проценты 0-100)
             const progressValue = t.progress ?? 0;
             const barWidth = Math.min(progressValue, 100);
 
@@ -976,6 +935,7 @@ async function loadTargets() {
     }
 }
 
+// Детализация цели
 async function showTargetDetails(id, name) {
     const area = document.getElementById('details-area');
     area.innerHTML = '<div class="text-center mt-5">Обработка...</div>';
@@ -985,9 +945,8 @@ async function showTargetDetails(id, name) {
         if (!res.ok) throw new Error(`Ошибка сервера: ${res.status}`);
 
         const target = await res.json();
-        console.log("Пришли данные:", target); // Проверь это в консоли F12!
+        console.log("Пришли данные:", target); 
 
-        // Безопасное извлечение полей (пробуем и маленькую, и большую буквы)
         const tId = target.id || target.Id || id;
         const tName = target.name || target.Name || name;
         const tTotal = target.total ?? target.Total ?? 0;
@@ -1000,17 +959,14 @@ async function showTargetDetails(id, name) {
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:30px;">
                 <h1 style="margin:0;">${tName}</h1>
                 <div style="display:flex; gap:10px;">
-    <!-- Кнопка пополнения (пока заглушка) -->
    <button class="btn-submit" style="background:#28a745; width:auto; padding:10px 20px;"
     onclick="openDepositTargetForm('${tId}', '${tName}')">+ Операция</button>
 
-    <!-- Кнопка РЕДАКТИРОВАНИЯ: передаем ID, текущее имя и цель -->
     <button class="btn-inline-add"
             onclick="showEditAutonomousTargetForm('${tId}', '${tName}', ${tGoal})" 
             style="background: #f0f2f5; color: #65676b; border: 1px solid #ddd; width: 45px; height: 45px;" 
             title="Редактировать">✎</button>
             
-    <!-- Кнопка УДАЛЕНИЯ -->
     <button class="btn-inline-del" onclick="deleteTarget('${tId}')" style="margin:0; width: 45px; height: 45px;">🗑</button>
 </div>
             </div>
@@ -1035,7 +991,6 @@ async function showTargetDetails(id, name) {
 
             <div class="section-title" style="margin-top: 40px; color: #65676b; font-size: 0.9rem; text-transform: uppercase;">История пополнений</div>
             <div id="target-history-list">
-                <!-- Здесь будет список транзакций -->
             </div>
         `;
 
@@ -1053,6 +1008,7 @@ async function showTargetDetails(id, name) {
     }
 }
 
+// Форма создания цели
 function showCreateTargetForm() {
     const area = document.getElementById('details-area');
     area.innerHTML = `
@@ -1074,10 +1030,10 @@ function showCreateTargetForm() {
     `;
 }
 
+// Сохранение цели
 async function submitCreateTarget() {
     const nameInput = document.getElementById('target-name');
     const goalInput = document.getElementById('target-goal');
-    // Добавим поле начальной суммы, раз DTO это позволяет
     const totalInput = document.getElementById('target-total') || { value: 0 };
 
     if (!nameInput.value.trim() || !goalInput.value) {
@@ -1086,7 +1042,7 @@ async function submitCreateTarget() {
     }
 
     const payload = {
-        userId: "3fa85f64-5717-4562-b3fc-2c963f66afa6", // Твой системный Guid
+        userId: "3fa85f64-5717-4562-b3fc-2c963f66afa6",
         name: nameInput.value.trim(),
         total: parseFloat(totalInput.value) || 0,
         goal: parseFloat(goalInput.value)
@@ -1100,13 +1056,12 @@ async function submitCreateTarget() {
         });
 
         if (res.ok) {
-            await loadTargets(); // Обновляем список в сайдбаре
+            await loadTargets(); 
 
             try {
                 const created = await res.json();
                 showTargetDetails(created.id, created.name);
             } catch {
-                // Если бэкенд не вернул объект, просто выводим успех
                 document.getElementById('details-area').innerHTML = "<h3>Копилка создана!</h3>";
             }
         } else {
@@ -1119,22 +1074,7 @@ async function submitCreateTarget() {
     }
 }
 
-async function deleteTarget(id) {
-    if (!confirm("Удалить эту копилку? Все данные о накоплениях будут удалены.")) return;
-
-    try {
-        const res = await fetch(`${API_URL}/Targets/${id}`, { method: 'DELETE' });
-        if (res.ok) {
-            await loadTargets(); // Обновить сайдбар
-            document.getElementById('details-area').innerHTML = '<div class="text-center mt-5"><h3>Копилка удалена</h3></div>';
-        }
-    } catch (e) {
-        console.error(e);
-        await loadTargets();
-    }
-}
-
-// 1. Показать форму редактирования
+// Форма редактирования цели
 function showEditAutonomousTargetForm(id, oldName, oldGoal) {
     const area = document.getElementById('details-area');
 
@@ -1156,7 +1096,7 @@ function showEditAutonomousTargetForm(id, oldName, oldGoal) {
     `;
 }
 
-// 2. Отправка PUT запроса
+// Сохранение редактированной цели
 async function submitUpdateAutonomousTarget(id) {
     const newName = document.getElementById('edit-target-name').value;
     const newGoal = document.getElementById('edit-target-goal').value;
@@ -1176,38 +1116,32 @@ async function submitUpdateAutonomousTarget(id) {
         });
 
         if (res.ok) {
-            // 1. Обновляем список в сайдбаре (если имя изменилось)
             await loadTargets();
-            // 2. Возвращаемся в детализацию цели
             showTargetDetails(id, newName);
         } else {
             alert("Не удалось сохранить изменения");
         }
     } catch (e) {
         console.error("Ошибка при обновлении цели:", e);
-        // Если CORS или мелкий сбой — всё равно пробуем обновиться
         await loadTargets();
         showTargetDetails(id, newName);
     }
 }
 
+// Удаление цели
 async function deleteTarget(id) {
-    // 1. Спрашиваем подтверждение (важно для удаления)
     if (!confirm("Вы уверены, что хотите удалить эту копилку? Все данные о накоплениях будут потеряны.")) {
         return;
     }
 
     try {
-        // 2. Отправляем запрос на удаление
         const res = await fetch(`${API_URL}/Targets/${id}`, {
             method: 'DELETE'
         });
 
         if (res.ok) {
-            // 3. Обновляем список копилок в левой панели
             await loadTargets();
 
-            // 4. Очищаем центральную область
             document.getElementById('details-area').innerHTML = `
                 <div class="text-center text-muted mt-5">
                     <h2>Копилка удалена</h2>
@@ -1220,13 +1154,12 @@ async function deleteTarget(id) {
         }
     } catch (e) {
         console.error("Ошибка удаления:", e);
-        // Если была сетевая ошибка/CORS, но в базе удалилось
         await loadTargets();
         document.getElementById('details-area').innerHTML = "<h2>Готово</h2>";
     }
 }
 
-// Функция открытия формы пополнения
+// Новая операция с целью
 function openDepositTargetForm(targetId, targetName) {
     const area = document.getElementById('details-area');
 
@@ -1235,7 +1168,6 @@ function openDepositTargetForm(targetId, targetName) {
             <h2 style="text-align:center; margin-bottom:20px;">Операция с копилкой</h2>
             <p style="text-align:center; color:#888; margin-bottom:20px;">Цель: <strong>${targetName}</strong></p>
             
-            <!-- Выбор: Положить или Забрать -->
             <div class="type-selector" style="margin-bottom: 30px;">
                 <input type="radio" name="depType" id="type-dep-inc" value="1" checked>
                 <label class="type-btn" for="type-dep-inc" style="border-color: #28a745; color: #28a745;">Положить</label>
@@ -1266,17 +1198,17 @@ function openDepositTargetForm(targetId, targetName) {
     document.getElementById('deposit-value').style.color = '#28a745';
 }
 
+// Сохранение операции с целью 
 async function submitTargetDeposit(targetId, targetName) {
     const valInput = document.getElementById('deposit-value').value;
     const descInput = document.getElementById('deposit-desc').value;
-    // Считываем выбранный тип (1 или 2)
     const typeInput = document.querySelector('input[name="depType"]:checked').value;
 
     if (!valInput || valInput <= 0) return alert("Введите сумму");
 
     const payload = {
         targetId: targetId,
-        type: parseInt(typeInput), // 1 - Пополнение, 2 - Снятие
+        type: parseInt(typeInput), 
         value: parseFloat(valInput),
         createdDay: new Date().toISOString().split('T')[0],
         description: descInput || (parseInt(typeInput) === 1 ? "Пополнение" : "Снятие")
@@ -1303,6 +1235,7 @@ async function submitTargetDeposit(targetId, targetName) {
     }
 }
 
+// Удаление операции с целью
 async function deleteTargetTransaction(transactionId, targetId, targetName) {
     if (!confirm("Удалить эту запись из истории копилки?")) return;
 
@@ -1312,7 +1245,6 @@ async function deleteTargetTransaction(transactionId, targetId, targetName) {
         });
 
         if (res.ok) {
-            // Обновляем прогресс в сайдбаре и на дашборде
             await loadTargets();
             showTargetDetails(targetId, targetName);
         } else {
@@ -1325,9 +1257,10 @@ async function deleteTargetTransaction(transactionId, targetId, targetName) {
     }
 }
 
+// История операций с целью
 async function loadTargetTransactions(targetId) {
     const list = document.getElementById('target-history-list');
-    const targetName = document.querySelector('h1').innerText; // Берем имя для обновления экрана
+    const targetName = document.querySelector('h1').innerText; 
 
     try {
         const res = await fetch(`${API_URL}/TargetTransactions/${targetId}`);
@@ -1344,7 +1277,6 @@ async function loadTargetTransactions(targetId) {
 
             return `
                 <div class="tr-item" style="border-left: 4px solid ${isDeposit ? '#28a745' : '#dc3545'};">
-                    <!-- КНОПКА УДАЛЕНИЯ -->
                     <button class="btn-delete-small" 
                         onclick="deleteTargetTransaction('${t.id}', '${targetId}', '${targetName}')" 
                         title="Удалить запись">&times;</button>
@@ -1365,12 +1297,12 @@ async function loadTargetTransactions(targetId) {
     }
 }
 
+// Общий капитал в левом сайдбаре
 async function loadTotalBalance() {
     try {
         const res = await fetch(`${API_URL}/Accounts`);
         const accounts = await res.json();
 
-        // Считаем сумму только обычных счетов
         const totalSum = accounts.reduce((sum, acc) => sum + (acc.total || 0), 0);
 
         const container = document.getElementById('total-balance-container');
@@ -1391,16 +1323,15 @@ let currentFilterMonth = new Date().getMonth();
 let currentFilterYear = new Date().getFullYear();
 let currentFilterCategory = "all";
 let currentFilterType = 0;
+// Детализация общего капитала
 async function showTotalDashboard() {
     const area = document.getElementById('details-area');
     area.innerHTML = '<div class="text-center mt-5">Анализ данных...</div>';
 
     try {
-        // 1. Формируем URL для категорий в зависимости от типа
         let catUrl = `${API_URL}/Categories`;
         if (currentFilterType !== 0) catUrl += `?type=${currentFilterType}`;
 
-        // 2. Грузим всё разом
         const [accRes, txRes, catRes] = await Promise.all([
             fetch(`${API_URL}/Accounts`),
             fetch(`${API_URL}/Transactions?page=1&limit=500`),
@@ -1411,14 +1342,11 @@ async function showTotalDashboard() {
         const allTxs = await txRes.json();
         const categories = await catRes.json();
 
-        // 3. Расчеты
         const totalSum = accounts.reduce((sum, acc) => sum + (acc.total || 0), 0);
         const colors = ['#0084ff', '#28a745', '#ffc107', '#17a2b8', '#6610f2'];
 
-        // Фильтруем транзакции (убираем переводы и применяем фильтры)
         const externalTxs = allTxs.filter(t => t.relatedTransactionId === null);
 
-        // Для карточек считаем суммы только за ВЫБРАННЫЙ ПЕРИОД (без учета типа и категории)
         const periodTxs = externalTxs.filter(t => {
             const d = new Date(t.createdTime);
             const m = currentFilterMonth === -1 || d.getMonth() === currentFilterMonth;
@@ -1428,20 +1356,17 @@ async function showTotalDashboard() {
         const incomeSum = periodTxs.filter(t => t.type === 1).reduce((sum, t) => sum + t.value, 0);
         const expenseSum = periodTxs.filter(t => t.type === 2).reduce((sum, t) => sum + t.value, 0);
 
-        // Для списка фильтруем еще и по типу/категории
         const filteredTxs = periodTxs.filter(t => {
             const tMatch = currentFilterType === 0 || t.type === currentFilterType;
             const cMatch = currentFilterCategory === "all" || t.categoryName === currentFilterCategory;
             return tMatch && cMatch;
         });
 
-        // 4. Отрисовка
         area.innerHTML = `
             <h1 style="margin-bottom: 20px !important;">Общий обзор</h1>
             
-            <!-- ДИАГРАММА -->
             <div class="form-card" style="margin-bottom: 25px; padding: 20px; border-radius: 15px;">
-                <h5 class="mb-3" style="font-weight: bold; color: #2d3748;">Распределение средств (сейчас)</h5>
+                <h5 class="mb-3" style="font-weight: bold; color: #2d3748;">Распределение средств</h5>
                 <div class="chart-container" style="height: 40px; display: flex; border-radius: 10px; overflow: hidden; background: #f0f2f5; margin-bottom: 20px;">
                     ${accounts.map((acc, i) => {
             const share = totalSum > 0 ? (acc.total / totalSum) * 100 : 0;
@@ -1459,7 +1384,6 @@ async function showTotalDashboard() {
                 </div>
             </div>
 
-            <!-- КЛИКАБЕЛЬНЫЕ КАРТОЧКИ -->
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px;">
                 <div class="form-card" onclick="toggleTypeFilter(1)" 
                      style="border-left: 5px solid #28a745; cursor: pointer; border: ${currentFilterType === 1 ? '2px solid #28a745' : '1px solid #eee'}; background: ${currentFilterType === 1 ? '#f1fdf7' : 'white'}; padding: 15px; margin:0;">
@@ -1473,10 +1397,8 @@ async function showTotalDashboard() {
                 </div>
             </div>
 
-            <!-- ФИЛЬТРЫ В РЯД -->
             <div style="display: flex !important; justify-content: space-between !important; align-items: center !important; margin-bottom: 15px !important; width: 100% !important; min-height: 40px !important;">
 
-        <!-- Заголовок: убираем все отступы и центрируем вертикально -->
         <h4 style="margin: 0 !important; font-size: 1.1rem; display: flex !important; align-items: center !important; height: 100% !important;">
             ${currentFilterType === 0 ? 'Все операции' : currentFilterType === 1 ? 'Только доходы' : 'Только расходы'}
         </h4>
@@ -1520,7 +1442,7 @@ async function showTotalDashboard() {
     } catch (e) { console.error("Ошибка дашборда:", e); area.innerHTML = "<h2>Ошибка загрузки данных</h2>"; }
 }
 
-// Для выпадающих списков
+// Выпадающий список для фильтраций
 function changeGlobalFilter(month, year, category) {
     if (month !== null) currentFilterMonth = parseInt(month);
     if (year !== null) currentFilterYear = parseInt(year);
@@ -1528,18 +1450,13 @@ function changeGlobalFilter(month, year, category) {
     showTotalDashboard();
 }
 
-// Для кликов по карточкам Доходы/Расходы
+// Для кликов по карточкам доходы / расходы
 function toggleTypeFilter(type) {
     currentFilterType = (currentFilterType === type) ? 0 : type;
     currentFilterCategory = "all";
     showTotalDashboard();
 }
 
-
 loadTotalBalance();
-
-// Вызови эту функцию в самом конце app.js, чтобы она работала при старте
 loadTargets();
-
-// Запуск
 loadAccounts();

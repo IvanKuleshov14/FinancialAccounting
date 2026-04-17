@@ -1,6 +1,4 @@
-﻿using FinancialAccounting.Entities.Transactions;
-
-namespace FinancialAccouting.Contracts.Transactions
+﻿namespace FinancialAccouting.Contracts.Transactions
 {
     public record GetTransactionListDto(
         Guid Id,

@@ -16,7 +16,7 @@ namespace FinancialAccounting.Entities.TargetTransactions
 
         public Guid Id { get; set; }
 
-        public Target Target {  get; set; }
+        public Target? Target {  get; set; }
 
         public Guid TargetId { get; set; }
 

@@ -1,5 +1,4 @@
-﻿
-using FinancialAccounting.Application.TargetTransactions.Interfaces;
+﻿using FinancialAccounting.Application.TargetTransactions.Interfaces;
 using FinancialAccouting.Contracts.TargetTransactions;
 using Microsoft.AspNetCore.Mvc;
 

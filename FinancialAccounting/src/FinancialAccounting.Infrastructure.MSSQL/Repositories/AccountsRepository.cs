@@ -1,7 +1,6 @@
 ﻿using FinancialAccounting.Application.Accounts;
 using FinancialAccounting.Entities.Accounts;
 using FinancialAccounting.Infrastructure.MSSQL.Data;
-using FinancialAccouting.Contracts.Accounts;
 using Microsoft.EntityFrameworkCore;
 
 namespace FinancialAccounting.Infrastructure.MSSQL.Repositories

@@ -2,8 +2,6 @@
 using FinancialAccounting.Entities.Transactions;
 using FluentValidation;
 
-
-
 namespace FinancialAccounting.Application.Transactions
 {
     public class TransactionsService : ITransactionsService

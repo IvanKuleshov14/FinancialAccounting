@@ -25,17 +25,14 @@ namespace FinancialAccounting.Application
             _createAccountTargetValidator = createAccountTargetValidator;
         }
 
-
         public async Task Create(CreateAccountDto accountDto, CancellationToken cancellationToken)
         {
-            // Валидация
             var validatorResult = await _createValidator.ValidateAsync(accountDto, cancellationToken);
             if (!validatorResult.IsValid)
             {
                 throw new ValidationException(validatorResult.Errors);
             }
 
-            // Создание счета
             var accountId = Guid.NewGuid();
             var account = new Account(
                 accountId,
@@ -44,7 +41,6 @@ namespace FinancialAccounting.Application
                 accountDto.Total
                 );
 
-            // Запись в базу даных
             await _accountsRepository.AddAsync(account, cancellationToken);
         }
 

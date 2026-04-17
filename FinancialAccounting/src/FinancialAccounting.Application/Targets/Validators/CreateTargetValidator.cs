@@ -1,9 +1,5 @@
-﻿using FinancialAccouting.Contracts;
-using FinancialAccouting.Contracts.Targets;
+﻿using FinancialAccouting.Contracts.Targets;
 using FluentValidation;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace FinancialAccounting.Application.Targets.Validators
 {
