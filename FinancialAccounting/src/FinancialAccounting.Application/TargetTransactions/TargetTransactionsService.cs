@@ -2,8 +2,6 @@
 using FinancialAccounting.Entities.TargetTransactions;
 using FinancialAccouting.Contracts.TargetTransactions;
 using FluentValidation;
-using Newtonsoft.Json.Linq;
-using System.Transactions;
 
 namespace FinancialAccounting.Application.TargetTransactions
 {

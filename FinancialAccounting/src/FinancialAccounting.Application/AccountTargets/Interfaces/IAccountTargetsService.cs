@@ -1,5 +1,4 @@
-﻿using FinancialAccouting.Contracts;
-using FinancialAccouting.Contracts.AccountTargets;
+﻿using FinancialAccouting.Contracts.AccountTargets;
 
 namespace FinancialAccounting.Application.AccountTargets.Interfaces
 {

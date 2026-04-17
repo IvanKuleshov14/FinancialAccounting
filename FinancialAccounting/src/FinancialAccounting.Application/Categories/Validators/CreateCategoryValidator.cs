@@ -1,5 +1,4 @@
-﻿using FinancialAccouting.Contracts;
-using FinancialAccouting.Contracts.Categories;
+﻿using FinancialAccouting.Contracts.Categories;
 using FluentValidation;
 
 namespace FinancialAccounting.Application.Categories.Validators

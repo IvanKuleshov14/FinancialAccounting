@@ -1,5 +1,4 @@
-﻿using FinancialAccounting.Application.Accounts;
-using FinancialAccounting.Application.AccountTargets;
+﻿using FinancialAccounting.Application.AccountTargets;
 using FinancialAccounting.Application.AccountTargets.Interfaces;
 using FinancialAccounting.Application.Categories;
 using FinancialAccounting.Application.Categories.Interfaces;
@@ -10,9 +9,6 @@ using FinancialAccounting.Application.TargetTransactions.Interfaces;
 using FinancialAccounting.Application.Transactions;
 using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace FinancialAccounting.Application
 {

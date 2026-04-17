@@ -1,5 +1,4 @@
 ﻿using FinancialAccounting.Application.Categories.Interfaces;
-using FinancialAccounting.Application.Categories.Validators;
 using FinancialAccounting.Entities.Categories;
 using FinancialAccouting.Contracts.Categories;
 using FluentValidation;
